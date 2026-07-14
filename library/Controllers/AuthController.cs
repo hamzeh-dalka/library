@@ -20,17 +20,19 @@ namespace library.Controllers
     public class AuthController : ControllerBase
     {
         private readonly Library3DbContext _dbContext;
+        private readonly IConfiguration _configuration;
 
-        public AuthController(Library3DbContext dbContext)
+        public AuthController(Library3DbContext dbContext, IConfiguration configuration)
         {
             _dbContext = dbContext;
+            _configuration = configuration;
         }
 
         [Authorize(Roles = "Admin")]
         [HttpPost("RegisterLibrarian")]
         public async Task<IActionResult> RegisterLibrarian([FromBody] RegisterLibrarianDto dto , CancellationToken ct)
         {
-            if (await _dbContext.Users.AnyAsync(u => u.UserName.ToLower() == dto.UserName.ToLower()))
+            if (await _dbContext.Users.AnyAsync(u => u.UserName.ToLower() == dto.UserName.Trim().ToLower(), ct))
             {
                 return BadRequest("Username already exists");
             }
@@ -62,7 +64,7 @@ namespace library.Controllers
         [HttpPost("RegisterStudent")]
         public async Task<IActionResult> RegisterStudent([FromBody] RegisterStudentDto dto, CancellationToken ct)
         {
-            if (await _dbContext.Users.AnyAsync(u => u.UserName.ToLower() == dto.UserName.ToLower()))
+            if (await _dbContext.Users.AnyAsync(u => u.UserName.ToLower() == dto.UserName.Trim().ToLower(), ct))
             {
                 return BadRequest("Username already exists");
             }
@@ -102,7 +104,7 @@ namespace library.Controllers
                 return BadRequest("Username and password are required.");
             }
 
-            var user = await _dbContext.Users.FirstOrDefaultAsync(x => x.UserName.ToLower() == loginDto.UserName.ToLower(), ct);
+            var user = await _dbContext.Users.FirstOrDefaultAsync(x => x.UserName.ToLower() == loginDto.UserName.Trim().ToLower(), ct);
 
             if (user == null)
             {
@@ -130,10 +132,12 @@ namespace library.Controllers
                 new Claim(ClaimTypes.Role, user.Role.ToString())
             };
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("2a$11$pfWlsxzJPMwpthiIqbpudu44wXW4PqKYtA9fMXqY9FPIQ1xk5KsQ."));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var token = new JwtSecurityToken(
+                issuer: _configuration["Jwt:Issuer"],
+                audience: _configuration["Jwt:Audience"],
                 claims: claims,
                 expires: DateTime.UtcNow.AddDays(7),
                 signingCredentials: creds

@@ -11,9 +11,9 @@ using library;
 
 namespace library.Migrations
 {
-    [DbContext(typeof(ColLibraryDbContext))]
-    [Migration("20260412171408_all-models")]
-    partial class allmodels
+    [DbContext(typeof(Library3DbContext))]
+    [Migration("20260710175538_student_relation")]
+    partial class student_relation
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -43,7 +43,10 @@ namespace library.Migrations
                     b.Property<long?>("CategoryId")
                         .HasColumnType("bigint");
 
-                    b.Property<int>("PuplishedYear")
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("PublishedYear")
                         .HasColumnType("int");
 
                     b.Property<string>("Title")
@@ -112,7 +115,7 @@ namespace library.Migrations
                     b.ToTable("Categories");
                 });
 
-            modelBuilder.Entity("library.Models.User", b =>
+            modelBuilder.Entity("library.Models.Librarian", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -124,20 +127,97 @@ namespace library.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long?>("UserId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Librarians");
+                });
+
+            modelBuilder.Entity("library.Models.Student", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Faculty")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("MajorName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long?>("UserId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Students");
+                });
+
+            modelBuilder.Entity("library.Models.User", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("HashedPassword")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("IsAdmin")
-                        .HasColumnType("bit");
+                    b.Property<int>("Role")
+                        .HasColumnType("int");
 
-                    b.Property<string>("Name")
+                    b.Property<string>("UserName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
                     b.ToTable("Users");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1L,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            HashedPassword = "$2a$11$9hFA9jbWSimBZqpBLBxa4.2kieITIm94n6ckaNCoTzpImOn3hvEdC",
+                            Role = 1,
+                            UserName = "Admin"
+                        });
                 });
 
             modelBuilder.Entity("library.Models.Book", b =>
@@ -160,6 +240,24 @@ namespace library.Migrations
                         .HasForeignKey("UserId");
 
                     b.Navigation("Book");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("library.Models.Librarian", b =>
+                {
+                    b.HasOne("library.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("library.Models.Student", b =>
+                {
+                    b.HasOne("library.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId");
 
                     b.Navigation("User");
                 });

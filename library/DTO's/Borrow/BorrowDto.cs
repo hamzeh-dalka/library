@@ -1,23 +1,20 @@
-﻿using library.Models.Enum;
+﻿using library.Models;
+using library.Models.Enum;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace library.Models
+namespace library.DTO_s.Borrow
 {
-    public class Borrow
+    public class BorrowDto
     {
         public long Id { get; set; }
         public DateTime BorrowDate { get; set; }
         public DateTime DueDate { get; set; }
         public DateTime? ReturnDate { get; set; }
         public BorrowStatus Status { get; set; }
-
-        [ForeignKey("User")]
         public long? UserId { get; set; }
-        public User? User { get; set; }
-
-        [ForeignKey("Book")]
+        public string? UserName { get; set; }
         public long? BookId { get; set; }
-        public Book? Book { get; set; }
-        
+        public string? BookTitle { get; set; }
+        public string? BookAuthor { get; set; }
     }
 }

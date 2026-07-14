@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace library.Migrations
 {
     /// <inheritdoc />
-    public partial class allmodels : Migration
+    public partial class inti : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -26,15 +26,32 @@ namespace library.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Users",
+                name: "Students",
                 columns: table => new
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Faculty = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    MajorName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Phone = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Students", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Users",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     HashedPassword = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    IsAdmin = table.Column<bool>(type: "bit", nullable: false)
+                    Role = table.Column<int>(type: "int", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -51,7 +68,8 @@ namespace library.Migrations
                     Author = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     TotalCopies = table.Column<int>(type: "int", nullable: false),
                     AvailableCopies = table.Column<int>(type: "int", nullable: false),
-                    PuplishedYear = table.Column<int>(type: "int", nullable: false),
+                    PublishedYear = table.Column<int>(type: "int", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     CategoryId = table.Column<long>(type: "bigint", nullable: true)
                 },
                 constraints: table =>
@@ -61,6 +79,27 @@ namespace library.Migrations
                         name: "FK_Books_Categories_CategoryId",
                         column: x => x.CategoryId,
                         principalTable: "Categories",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Librarians",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Phone = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    UserId = table.Column<long>(type: "bigint", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Librarians", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Librarians_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
                         principalColumn: "Id");
                 });
 
@@ -91,6 +130,11 @@ namespace library.Migrations
                         principalColumn: "Id");
                 });
 
+            migrationBuilder.InsertData(
+                table: "Users",
+                columns: new[] { "Id", "CreatedAt", "HashedPassword", "Role", "UserName" },
+                values: new object[] { 1L, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "$2a$11$9hFA9jbWSimBZqpBLBxa4.2kieITIm94n6ckaNCoTzpImOn3hvEdC", 1, "Admin" });
+
             migrationBuilder.CreateIndex(
                 name: "IX_Books_CategoryId",
                 table: "Books",
@@ -105,6 +149,11 @@ namespace library.Migrations
                 name: "IX_Borrows_UserId",
                 table: "Borrows",
                 column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Librarians_UserId",
+                table: "Librarians",
+                column: "UserId");
         }
 
         /// <inheritdoc />
@@ -112,6 +161,12 @@ namespace library.Migrations
         {
             migrationBuilder.DropTable(
                 name: "Borrows");
+
+            migrationBuilder.DropTable(
+                name: "Librarians");
+
+            migrationBuilder.DropTable(
+                name: "Students");
 
             migrationBuilder.DropTable(
                 name: "Books");

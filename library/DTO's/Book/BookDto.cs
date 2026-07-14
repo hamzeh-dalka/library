@@ -1,8 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-
-namespace library.Models
+﻿namespace library.DTO_s.Book
 {
-    public class Book
+    public class BookDto
     {
         public long Id { get; set; }
         public string Title { get; set; }
@@ -11,9 +9,8 @@ namespace library.Models
         public int AvailableCopies { get; set; }
         public int PublishedYear { get; set; }
         public DateTime CreatedAt { get; set; }
-
-        [ForeignKey("Category")]
         public long? CategoryId { get; set; }
-        public Category? Category { get; set; }
+        public string? CategoryName { get; set; }
+
     }
 }

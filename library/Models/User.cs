@@ -1,5 +1,6 @@
-﻿using library.Models.Enum;
+﻿using library.Enums;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 
 namespace library.Models
 {
@@ -7,10 +8,11 @@ namespace library.Models
     public class User
     {
         public long Id { get; set; }
-        public string UserName { get; set; }
-        public string HashedPassword { get; set; }
+        [Required]
+        public string UserName { get; set; } = string.Empty;
+        [Required]
+        public string HashedPassword { get; set; } = string.Empty;
         public Role Role { get; set; }
-        public DateTime CreatedAt { get; set; }
-
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

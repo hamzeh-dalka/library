@@ -1,5 +1,5 @@
 ﻿using library.Models;
-using library.Models.Enum;
+using library.Enums;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace library.DTO_s.Borrow
@@ -11,8 +11,8 @@ namespace library.DTO_s.Borrow
         public DateTime DueDate { get; set; }
         public DateTime? ReturnDate { get; set; }
         public BorrowStatus Status { get; set; }
-        public long? UserId { get; set; }
-        public string? UserName { get; set; }
+        public long? StudentId { get; set; }
+        public string? StudentName { get; set; }
         public long? BookId { get; set; }
         public string? BookTitle { get; set; }
         public string? BookAuthor { get; set; }

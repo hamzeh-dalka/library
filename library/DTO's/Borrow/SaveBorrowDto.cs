@@ -12,7 +12,7 @@ namespace library.DTO_s.Borrow
         [Required(ErrorMessage = "Due date is required.")]
         public DateTime DueDate { get; set; }
         public DateTime? ReturnDate { get; set; }
-        public long? UserId { get; set; }
+        public long? StudentId { get; set; }
         public long? BookId { get; set; }
     }
 }

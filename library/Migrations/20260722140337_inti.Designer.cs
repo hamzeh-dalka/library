@@ -11,9 +11,9 @@ using library;
 
 namespace library.Migrations
 {
-    [DbContext(typeof(Library3DbContext))]
-    [Migration("20260712142723_L2")]
-    partial class L2
+    [DbContext(typeof(LibraryDbContext))]
+    [Migration("20260722140337_inti")]
+    partial class inti
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -45,6 +45,9 @@ namespace library.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("Embedding")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("PublishedYear")
                         .HasColumnType("int");
@@ -86,14 +89,14 @@ namespace library.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
-                    b.Property<long?>("UserId")
+                    b.Property<long?>("StudentId")
                         .HasColumnType("bigint");
 
                     b.HasKey("Id");
 
                     b.HasIndex("BookId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("StudentId");
 
                     b.ToTable("Borrows");
                 });
@@ -206,9 +209,12 @@ namespace library.Migrations
 
                     b.Property<string>("UserName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("UserName")
+                        .IsUnique();
 
                     b.ToTable("Users");
 
@@ -216,7 +222,7 @@ namespace library.Migrations
                         new
                         {
                             Id = 1L,
-                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedAt = new DateTime(2026, 7, 22, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             HashedPassword = "$2a$11$9hFA9jbWSimBZqpBLBxa4.2kieITIm94n6ckaNCoTzpImOn3hvEdC",
                             Role = 1,
                             UserName = "Admin"
@@ -226,7 +232,7 @@ namespace library.Migrations
             modelBuilder.Entity("library.Models.Book", b =>
                 {
                     b.HasOne("library.Models.Category", "Category")
-                        .WithMany()
+                        .WithMany("Books")
                         .HasForeignKey("CategoryId");
 
                     b.Navigation("Category");
@@ -238,13 +244,13 @@ namespace library.Migrations
                         .WithMany()
                         .HasForeignKey("BookId");
 
-                    b.HasOne("library.Models.User", "User")
+                    b.HasOne("library.Models.Student", "Student")
                         .WithMany()
-                        .HasForeignKey("UserId");
+                        .HasForeignKey("StudentId");
 
                     b.Navigation("Book");
 
-                    b.Navigation("User");
+                    b.Navigation("Student");
                 });
 
             modelBuilder.Entity("library.Models.Librarian", b =>
@@ -263,6 +269,11 @@ namespace library.Migrations
                         .HasForeignKey("UserId");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("library.Models.Category", b =>
+                {
+                    b.Navigation("Books");
                 });
 #pragma warning restore 612, 618
         }

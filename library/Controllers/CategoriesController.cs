@@ -10,12 +10,12 @@ namespace library.Controllers
 {
     [Route("api/Categories")]
     [ApiController]
-    [Authorize(Roles = "librarian")]
+    [Authorize(Roles = "Librarian")]
     public class CategoriesController : ControllerBase
     {
-        private readonly Library3DbContext _dbContext;
+        private readonly LibraryDbContext _dbContext;
 
-        public CategoriesController(Library3DbContext dbContext)
+        public CategoriesController(LibraryDbContext dbContext)
         {
             _dbContext = dbContext;
         }

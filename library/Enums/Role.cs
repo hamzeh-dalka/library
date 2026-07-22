@@ -1,4 +1,4 @@
-﻿namespace library.Models.Enum
+﻿namespace library.Enums
 {
     public enum Role
     {

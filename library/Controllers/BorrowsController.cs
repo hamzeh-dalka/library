@@ -1,12 +1,13 @@
 ﻿using library.DTO_s;
+using library.DTO_s.Book;
 using library.DTO_s.Borrow;
 using library.Models;
+using library.Enums;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
-using library.Models.Enum;
-using Microsoft.AspNetCore.Authorization;
 
 namespace library.Controllers
 {
@@ -14,20 +15,20 @@ namespace library.Controllers
     [ApiController]
     public class BorrowsController : ControllerBase
     {
-        private readonly Library3DbContext _dbContext;
+        private readonly LibraryDbContext _dbContext;
 
-        public BorrowsController(Library3DbContext dbContext)
+        public BorrowsController(LibraryDbContext dbContext)
         {
             _dbContext = dbContext;
         }
-        [Authorize(Roles = "librarian")]
+        [Authorize(Roles = "Librarian")]
         [HttpGet("GetAllBorrows")]
-        public async Task<IActionResult> GetAllBorrows([FromQuery] FilterBorrowDto filterBorrowDto , CancellationToken ct)
+        public async Task<IActionResult> GetAllBorrows([FromQuery] FilterBorrowDto filterBorrowDto, CancellationToken ct)
         {
             var userId = GetCurrentUserId();
 
             var query = _dbContext.Borrows
-                .Include(x => x.User)
+                .Include(x => x.Student)
                 .Include(x => x.Book)
                 .AsNoTracking()
                 .AsQueryable();
@@ -56,13 +57,13 @@ namespace library.Controllers
                 .Take(filterBorrowDto.PageSize)
                 .Select(x => new BorrowDto
                 {
-                   Id = x.Id,
+                    Id = x.Id,
                     BorrowDate = x.BorrowDate,
                     DueDate = x.DueDate,
                     ReturnDate = x.ReturnDate,
                     Status = x.Status,
-                    UserId = x.UserId,
-                    UserName = x.User.UserName,
+                    StudentId = x.StudentId,
+                    StudentName = x.Student.Name,
                     BookId = x.BookId,
                     BookTitle = x.Book.Title,
                     BookAuthor = x.Book.Author
@@ -71,19 +72,68 @@ namespace library.Controllers
 
             return Ok(borrows);
         }
+
+        [HttpGet("GetBorrowsForStudent")]
+        public async Task<IActionResult> GetBorrowsForStudent(CancellationToken ct)
+        {
+            var userId = GetCurrentUserId();
+
+            var studentId = await _dbContext.Students
+                .Where(s => s.UserId == userId)
+                .Select(s => s.Id)
+                .FirstOrDefaultAsync(ct);
+
+            if (studentId == 0)
+            {
+                return NotFound("Student not found.");
+            }
+
+            var borrows = await _dbContext.Borrows
+                .Where(x => x.StudentId == studentId)
+                .AsNoTracking()
+                .Include(x => x.Book)
+                .ThenInclude(b => b.Category) 
+                .Select(x => new BookDto
+                {
+                    Id = x.Book.Id,
+                    Title = x.Book.Title,
+                    Author = x.Book.Author,
+                    TotalCopies = x.Book.TotalCopies,
+                    AvailableCopies = x.Book.AvailableCopies,
+                    PublishedYear = x.Book.PublishedYear,
+                    CategoryId = x.Book.CategoryId,
+                    CategoryName = x.Book.Category != null ? x.Book.Category.Name : null,
+                    CreatedAt = x.Book.CreatedAt
+                })
+                .ToListAsync(ct);
+
+            return Ok(borrows);
+        }
+
+
         [Authorize(Roles = "Student")]
         [HttpPost("CreateBorrow")]
         public async Task<IActionResult> CreateBorrow([FromBody] SaveBorrowDto saveBorrowDto, CancellationToken ct)
         {
             var userId = GetCurrentUserId();
 
-            var borrow = new Borrow()
+            var studentId = await _dbContext.Students
+                .Where(s => s.UserId == userId)
+                .Select(s => s.Id)
+                .FirstOrDefaultAsync(ct);
+
+            if (studentId == 0)
+            {
+                return NotFound("Student profile not found for this user.");
+            }
+
+                var borrow = new Borrow()
             {
                 BorrowDate = saveBorrowDto.BorrowDate,
                 DueDate = saveBorrowDto.DueDate,
                 ReturnDate = saveBorrowDto.ReturnDate,
                 Status = BorrowStatus.Borrowed,
-                UserId = userId,
+                StudentId = studentId,
                 BookId = saveBorrowDto.BookId
             };
 
@@ -98,7 +148,13 @@ namespace library.Controllers
         {
             var userId = GetCurrentUserId();
 
-            var borrow = await _dbContext.Borrows.FirstOrDefaultAsync(x => x.Id == id && x.UserId == userId, ct);
+            var studentId = await _dbContext.Students
+                .Where(s => s.UserId == userId)
+                .Select(s => s.Id)
+                .FirstOrDefaultAsync(ct);
+
+            var borrow = await _dbContext.Borrows
+                .FirstOrDefaultAsync(x => x.Id == id && x.StudentId == studentId, ct);
 
             if (borrow == null)
             {
@@ -118,14 +174,20 @@ namespace library.Controllers
             return Ok(new { Message = "Book returned" });
 
         }
-        
+
         [Authorize(Roles = "Student")]
         [HttpPatch("ExtendDueDate/{id}")]
         public async Task<IActionResult> ExtendDueDate(long id, [FromBody] ExtendBorrowDto extendBorrowDto, CancellationToken ct)
         {
             var userId = GetCurrentUserId();
 
-            var borrow = await _dbContext.Borrows.FirstOrDefaultAsync(x => x.Id == id && x.UserId == userId, ct);
+            var studentId = await _dbContext.Students
+                .Where(s => s.UserId == userId)
+                .Select(s => s.Id)
+                .FirstOrDefaultAsync(ct);
+
+            var borrow = await _dbContext.Borrows
+                .FirstOrDefaultAsync(x => x.Id == id && x.StudentId == studentId, ct);
 
             if (borrow == null)
             {
@@ -149,7 +211,7 @@ namespace library.Controllers
             return Ok(new { Message = "Due date extended" });
 
         }
-        
+
         [Authorize(Roles = "Librarian")]
         [HttpDelete("DeleteBorrow/{id}")]
         public async Task<IActionResult> DeleteBorrow(long id, CancellationToken ct)

@@ -1,4 +1,4 @@
-﻿using library.Models.Enum;
+﻿using library.Enums;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace library.Models
@@ -6,14 +6,14 @@ namespace library.Models
     public class Borrow
     {
         public long Id { get; set; }
-        public DateTime BorrowDate { get; set; }
+        public DateTime BorrowDate { get; set; } = DateTime.UtcNow;
         public DateTime DueDate { get; set; }
         public DateTime? ReturnDate { get; set; }
         public BorrowStatus Status { get; set; }
 
-        [ForeignKey("User")]
-        public long? UserId { get; set; }
-        public User? User { get; set; }
+        [ForeignKey("Student")]
+        public long? StudentId { get; set; }
+        public Student? Student { get; set; }
 
         [ForeignKey("Book")]
         public long? BookId { get; set; }

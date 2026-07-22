@@ -1,4 +1,4 @@
-﻿using library.Models.Enum;
+﻿using library.Enums;
 
 namespace library.DTO_s
 {

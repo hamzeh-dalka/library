@@ -1,4 +1,4 @@
-﻿namespace library.Models.Enum
+﻿namespace library.Enums
 {
     public enum BorrowStatus
     {
@@ -8,3 +8,4 @@
         Cancelled = 4,
     }
 }
+

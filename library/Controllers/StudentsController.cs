@@ -11,9 +11,9 @@ namespace library.Controllers
     [ApiController]
     public class StudentsController : ControllerBase
     {
-        private readonly Library3DbContext _dbContext;
+        private readonly LibraryDbContext _dbContext;
 
-        public StudentsController(Library3DbContext dbContext)
+        public StudentsController(LibraryDbContext dbContext)
         {
             _dbContext = dbContext;
         }
@@ -68,11 +68,11 @@ namespace library.Controllers
         {
             var userId = GetCurrentUserId();
 
-            var student = await _dbContext.Students.FirstOrDefaultAsync(x => x.Id == id , ct);
+            var student = await _dbContext.Students.FirstOrDefaultAsync(x => x.UserId == userId , ct);
 
             if (student == null)
             {
-                return NotFound($"Student with ID {id} not found.");
+                return NotFound($"Student profile not found.");
             }
 
             student.Name = saveStudentDto.Name;

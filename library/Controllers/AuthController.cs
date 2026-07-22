@@ -1,7 +1,7 @@
 ﻿using library.DTO_s.Login;
 using library.DTO_s.Register;
 using library.Models;
-using library.Models.Enum;
+using library.Enums;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
@@ -19,10 +19,10 @@ namespace library.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly Library3DbContext _dbContext;
+        private readonly LibraryDbContext _dbContext;
         private readonly IConfiguration _configuration;
 
-        public AuthController(Library3DbContext dbContext, IConfiguration configuration)
+        public AuthController(LibraryDbContext dbContext, IConfiguration configuration)
         {
             _dbContext = dbContext;
             _configuration = configuration;

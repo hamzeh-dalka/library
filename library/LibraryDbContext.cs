@@ -1,14 +1,14 @@
 ﻿using library.Models;
-using library.Models.Enum;
+using library.Enums;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
 
 namespace library
 {
-    public class Library3DbContext : DbContext
+    public class LibraryDbContext : DbContext
     {
-        public Library3DbContext(DbContextOptions<Library3DbContext> options) : base(options) 
+        public LibraryDbContext(DbContextOptions<LibraryDbContext> options) : base(options) 
         {
         }
 
@@ -17,7 +17,7 @@ namespace library
             base.OnModelCreating(modelBuilder);
 
             modelBuilder.Entity<User>().HasData(                          //admin123
-                new User { Id = 1, UserName = "Admin", HashedPassword = "$2a$11$9hFA9jbWSimBZqpBLBxa4.2kieITIm94n6ckaNCoTzpImOn3hvEdC",  Role = Role.Admin }
+                new User { Id = 1, UserName = "Admin", HashedPassword = "$2a$11$9hFA9jbWSimBZqpBLBxa4.2kieITIm94n6ckaNCoTzpImOn3hvEdC",  Role = Role.Admin , CreatedAt = new DateTime(2026,7,22) }
             );
         }
 

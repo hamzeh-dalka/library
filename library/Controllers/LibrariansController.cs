@@ -10,9 +10,9 @@ namespace library.Controllers
     [ApiController]
     public class LibrariansController : ControllerBase
     {
-        private readonly Library3DbContext _dbContext;
+        private readonly LibraryDbContext _dbContext;
 
-        public LibrariansController(Library3DbContext dbContext)
+        public LibrariansController(LibraryDbContext dbContext)
         {
             _dbContext = dbContext;
         }
@@ -41,7 +41,7 @@ namespace library.Controllers
                     Name = x.Name,
                     Email = x.Email,
                     Phone = x.Phone
-                }) .ToListAsync();
+                }) .ToListAsync(ct);
 
             return Ok(librarians);
         }

@@ -1,8 +1,11 @@
 using library;
+using library.AIService;
+using library.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using library.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +15,8 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddScoped<IAIService, AIService>();
 
 builder.Services.AddAuthorization();
 
@@ -32,9 +37,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-builder.Services.AddDbContext<Library3DbContext>(options =>
+builder.Services.AddDbContext<LibraryDbContext>(options =>
     options.UseSqlServer(
-        builder.Configuration.GetConnectionString("Library3DbContext")
+        builder.Configuration.GetConnectionString("LibraryDbContext")
         )
 );
 

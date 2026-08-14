@@ -84,35 +84,36 @@ All endpoints are prefixed with `/api`. Endpoints marked 🔒 require a valid JW
 
 ## Screenshots
 
-### Admin
 
+### Admin
+ 
 | Admin Dashboard |
 |---|
-| ![Admin Dashboard](./src/screenshots/adminDashboard.png) |
-
+| ![Admin Dashboard](./frontend/library/src/screenshots/adminDashboard.png) |
+ 
 ### Librarian
-
+ 
 | Librarian Dashboard | Manage Books & Categories |
 |---|---|
-| ![Librarian Dashboard](./src/screenshots/Librarian%20Dashboard.png) | ![Manage Books and Categories](./src/screenshots/manageBooksAndCategorys.png) |
-
+| ![Librarian Dashboard](./frontend/library/src/screenshots/Librarian%20Dashboard.png) | ![Manage Books and Categories](./frontend/library/src/screenshots/manageBooksAndCategorys.png) |
+ 
 | Add New Book | Edit Book |
 |---|---|
-| ![Add New Book](./src/screenshots/addNewBook.png) | ![Edit Book](./src/screenshots/editBook.png) |
-
+| ![Add New Book](./frontend/library/src/screenshots/addNewBook.png) | ![Edit Book](./frontend/library/src/screenshots/editBook.png) |
+ 
 | Manage Borrows | Update Profile |
 |---|---|
-| ![Manage Borrows](./src/screenshots/manageBorrows.png) | ![Librarian Update Profile](./src/screenshots/librarianUpdateProfile.png) |
-
+| ![Manage Borrows](./frontend/library/src/screenshots/manageBorrows.png) | ![Librarian Update Profile](./frontend/library/src/screenshots/librarianUpdateProfile.png) |
+ 
 ### Student
-
+ 
 | Student Dashboard | Request Borrow |
 |---|---|
-| ![Student Dashboard](./src/screenshots/Student%20Dashboard.png) | ![Request Borrow](./src/screenshots/requestBoorow.png) |
-
+| ![Student Dashboard](./frontend/library/src/screenshots/Student%20Dashboard.png) | ![Request Borrow](./frontend/library/src/screenshots/requestBoorow.png) |
+ 
 | Student Borrows | Update Profile |
 |---|---|
-| ![Student Borrows](./src/screenshots/Student%20Borrows.png) | ![Student Update Profile](./src/screenshots/studentUpdateProfile.png) |
+| ![Student Borrows](./frontend/library/src/screenshots/Student%20Borrows.png) | ![Student Update Profile](./frontend/library/src/screenshots/studentUpdateProfile.png) |
 
 ## Getting Started
 

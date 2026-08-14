@@ -1,0 +1,402 @@
+/* --- التخطيط العام للنظام --- */
+.dashboard-layout {
+  display: flex;
+  height: 100vh;
+  background-color: #f8fafc;
+  font-family: inherit;
+  overflow: hidden;
+}
+
+/* --- القائمة الجانبية (Sidebar) --- */
+.sidebar {
+  width: 260px;
+  min-width: 260px;
+  background-color: #0f172a;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100vh;
+}
+
+.sidebar-header {
+  padding: 24px;
+  background-color: #020617;
+}
+
+.sidebar-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #38bdf8;
+}
+
+.sidebar-header p {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 0;
+  gap: 4px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.nav-link {
+  color: #cbd5e1;
+  text-decoration: none;
+  padding: 14px 24px;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  display: block;
+}
+
+.nav-link:hover, .nav-link.active {
+  background-color: #1e293b;
+  color: #ffffff;
+  border-left: 4px solid #38bdf8;
+}
+
+.sidebar-footer {
+  padding: 20px;
+  border-top: 1px solid #1e293b;
+}
+
+.btn-logout {
+  width: 100%;
+  padding: 10px;
+  background-color: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.btn-logout:hover { background-color: #dc2626; }
+
+/* --- المحتوى الرئيسي --- */
+.main-content {
+  flex: 1;
+  padding: 30px;
+  overflow-y: auto;
+  background-color: #f8fafc;
+}
+
+.books-management-container {
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+h2 {
+  color: #1e293b;
+  margin: 0 0 4px 0;
+}
+
+.subtitle {
+  color: #64748b;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-primary {
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+}
+.btn-primary:hover { background-color: #1d4ed8; }
+
+.btn-secondary {
+  background-color: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+}
+.btn-secondary:hover { background-color: #e2e8f0; }
+
+/* --- التنبيهات --- */
+.alert {
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  font-weight: 500;
+}
+.alert-success { background-color: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+.alert-error { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+
+/* --- قسم إدارة الأقسام --- */
+.category-panel {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  margin-bottom: 24px;
+  border-left: 4px solid #10b981;
+  border: 1px solid #e2e8f0;
+}
+
+.category-panel h3 { margin-top: 0; color: #1e293b; font-size: 1.1rem; }
+
+.category-form-inline {
+  display: flex;
+  gap: 10px;
+  max-width: 400px;
+  margin-bottom: 15px;
+}
+
+.btn-save-cat {
+  background-color: #10b981;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.btn-save-cat:hover { background-color: #059669; }
+
+/* --- تنسيقات شارات الأقسام وأزرار الحذف الخاصة بها --- */
+.category-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.category-tag-item {
+  display: inline-flex;
+  align-items: center;
+  background-color: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 4px 4px 4px 12px;
+  font-size: 0.85rem;
+  color: #334155;
+  transition: all 0.2s ease;
+}
+
+.category-tag-item:hover {
+  border-color: #cbd5e1;
+  background-color: #e2e8f0;
+}
+
+.category-tag-text {
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+}
+
+.btn-delete-cat {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-delete-cat:hover {
+  background-color: #fee2e2;
+  color: #ef4444;
+}
+
+/* --- جدول الكتب --- */
+.table-container {
+  background: white;
+  border-radius: 10px;
+  overflow-x: auto;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  border: 1px solid #e2e8f0;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.data-table th, .data-table td {
+  padding: 16px;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 0.9rem;
+}
+
+.data-table th {
+  background-color: #f1f5f9;
+  color: #334155;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+}
+
+.data-table tr {
+  transition: background-color 0.15s ease;
+}
+
+.data-table tr:hover {
+  background-color: #f8fafc;
+}
+
+.empty-row {
+  text-align: center;
+  color: #94a3b8;
+  padding: 40px !important;
+}
+
+/* --- الشارات (Badges) --- */
+.badge {
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.badge-available { background-color: #dcfce7; color: #166534; }
+.badge-out { background-color: #fee2e2; color: #991b1b; }
+
+.category-badge {
+  background-color: #f1f5f9;
+  color: #475569;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* --- أزرار الإجراءات داخل الجدول --- */
+.row-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.btn-edit {
+  padding: 6px 12px;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+.btn-edit:hover { background-color: #2563eb; }
+
+.btn-delete {
+  padding: 6px 12px;
+  background-color: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+.btn-delete:hover { background-color: #dc2626; }
+
+/* --- تنسيقات النوافذ المنبثقة (Modals) --- */
+.modal-backdrop {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background-color: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+}
+
+.modal-card {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  width: 450px;
+  max-width: 90%;
+  box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
+  box-sizing: border-box;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.modal-card h3 { margin: 0; color: #1e293b; font-size: 1.2rem; }
+
+.btn-close-icon {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  color: #64748b;
+  cursor: pointer;
+  padding: 4px;
+}
+.btn-close-icon:hover { color: #1e293b; }
+
+.form-group { margin-bottom: 15px; }
+.form-row { display: flex; gap: 15px; }
+.form-row .form-group { flex: 1; }
+
+.form-group label { display: block; font-size: 0.85rem; color: #475569; margin-bottom: 6px; font-weight: 500; }
+.form-input { width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; box-sizing: border-box; background-color: #fff; transition: border-color 0.2s; }
+.form-input:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+
+.modal-actions { display: flex; gap: 10px; margin-top: 25px; }
+.btn-save { background-color: #10b981; color: white; border: none; padding: 10px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; flex: 1; transition: background-color 0.2s; }
+.btn-save:hover { background-color: #059669; }
+.btn-cancel { background-color: #94a3b8; color: white; border: none; padding: 10px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; flex: 1; transition: background-color 0.2s; }
+.btn-cancel:hover { background-color: #64748b; }
+
+/* --- حالة التحميل --- */
+.loading-state {
+  text-align: center;
+  padding: 50px;
+  color: #64748b;
+  font-size: 1.1rem;
+}

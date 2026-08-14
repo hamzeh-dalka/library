@@ -10,7 +10,6 @@ namespace library.Controllers
 {
     [Route("api/Categories")]
     [ApiController]
-    [Authorize(Roles = "Librarian")]
     public class CategoriesController : ControllerBase
     {
         private readonly LibraryDbContext _dbContext;
@@ -20,11 +19,10 @@ namespace library.Controllers
             _dbContext = dbContext;
         }
 
+        [Authorize(Roles = "Librarian,Student")]
         [HttpGet("GetAllCategories")]
         public async Task<IActionResult> GetAllCategories([FromQuery] FilterCategoryDto filterCategoryDto, CancellationToken ct)
         {
-            var userId = GetCurrentUserId();
-
             var query = _dbContext.Categories.AsNoTracking().AsQueryable();
 
             if (filterCategoryDto.Id.HasValue)
@@ -50,14 +48,26 @@ namespace library.Controllers
             return Ok(categories);
         }
 
+        [Authorize(Roles = "Librarian")]
         [HttpPost("AddCategory")]
         public async Task<IActionResult> AddCategory([FromBody] SaveCategoryDto saveCategoryDto, CancellationToken ct)
         {
-            var userId = GetCurrentUserId();
+            if (string.IsNullOrWhiteSpace(saveCategoryDto.Name))
+            {
+                return BadRequest("Category name is required.");
+            }
+
+            var nameExists = await _dbContext.Categories.AnyAsync(x =>
+                x.Name.ToLower() == saveCategoryDto.Name.Trim().ToLower(), ct);
+
+            if (nameExists)
+            {
+                return BadRequest($"Category with name '{saveCategoryDto.Name}' already exists.");
+            }
 
             var category = new Category()
             {
-                Name = saveCategoryDto.Name,
+                Name = saveCategoryDto.Name.Trim(),
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -65,13 +75,31 @@ namespace library.Controllers
             await _dbContext.SaveChangesAsync(ct);
 
             return Ok();
-
         }
 
-        [HttpPut("UpdateCategory")]
-        public async Task<IActionResult> UpdateCategory(long id, [FromBody] SaveCategoryDto saveCategoryDto, CancellationToken ct)
+        //[Authorize(Roles = "Librarian")]
+        //[HttpPut("UpdateCategory")]
+        //public async Task<IActionResult> UpdateCategory(long id, [FromBody] SaveCategoryDto saveCategoryDto, CancellationToken ct)
+        //{
+        //    var category = await _dbContext.Categories.FirstOrDefaultAsync(x => x.Id == id, ct);
+
+        //    if (category == null)
+        //    {
+        //        return NotFound($"Category with Id {id} not found.");
+        //    }
+
+        //    category.Name = saveCategoryDto.Name;
+
+        //    await _dbContext.SaveChangesAsync(ct);
+
+        //    return NoContent();
+
+        //}
+
+        [Authorize(Roles = "Librarian")]
+        [HttpDelete("DeleteCategory")]
+        public async Task<IActionResult> DeleteCategory([FromQuery] long id, CancellationToken ct)
         {
-            var userId = GetCurrentUserId();
 
             var category = await _dbContext.Categories.FirstOrDefaultAsync(x => x.Id == id, ct);
 
@@ -80,24 +108,11 @@ namespace library.Controllers
                 return NotFound($"Category with Id {id} not found.");
             }
 
-            category.Name = saveCategoryDto.Name;
+            var hasBooks = await _dbContext.Books.AnyAsync(x => x.CategoryId == id, ct);
 
-            await _dbContext.SaveChangesAsync(ct);
-
-            return NoContent();
-
-        }
-
-        [HttpDelete("DeleteCategory")]
-        public async Task<IActionResult> DeleteCategory([FromQuery] long id, CancellationToken ct)
-        {
-            var userId = GetCurrentUserId();
-
-            var category = await _dbContext.Categories.FirstOrDefaultAsync(x => x.Id == id, ct);
-
-            if (category == null)
+            if (hasBooks)
             {
-                return NotFound($"Category with Id {id} not found.");
+                return BadRequest($"Category with Id {id} cannot be deleted because it has associated books.");
             }
 
             _dbContext.Categories.Remove(category);

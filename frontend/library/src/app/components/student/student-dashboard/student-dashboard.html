@@ -1,0 +1,268 @@
+<div class="dashboard-container">
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar" aria-label="Student Portal Navigation Sidebar">
+    <div class="sidebar-header">
+      <h2>
+        <i class="fa-solid fa-book-open-reader me-2" aria-hidden="true"></i> Library
+      </h2>
+      <p class="portal-badge">Student Portal</p>
+    </div>
+
+    <nav class="sidebar-nav" aria-label="Student Main Navigation">
+      <a routerLink="/studentDashboard" routerLinkActive="active"
+        [routerLinkActiveOptions]="{exact: true}" class="nav-item">
+        <i class="fa-solid fa-chart-pie nav-icon" aria-hidden="true"></i>
+        <span>Dashboard</span>
+      </a>
+
+      <a routerLink="/studentBorrows" routerLinkActive="active" class="nav-item">
+        <i class="fa-solid fa-book-bookmark nav-icon" aria-hidden="true"></i>
+        <span>My Borrows</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="btn-logout" (click)="onLogout()" aria-label="Log out of student portal">
+        <i class="fa-solid fa-right-from-bracket nav-icon" aria-hidden="true"></i>
+        <span>Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content Area -->
+  <main class="main-content" id="student-main-content">
+    <!-- Top Bar with Search Bar & Profile Trigger -->
+    <header class="topbar">
+      <div class="search-container" role="search">
+        <label for="search-input" class="sr-only">Search library catalog</label>
+        <span class="search-icon" aria-hidden="true">
+          <i class="fa-solid fa-magnifying-glass"></i>
+        </span>
+        <input
+          id="search-input"
+          type="search"
+          placeholder="Search for books, authors, or categories..."
+          class="search-input"
+          autocomplete="off"
+          [value]="searchQuery"
+          (input)="onSearch($any($event.target).value)" />
+      </div>
+
+      <!-- Search Results Dropdown -->
+      <div *ngIf="searchQuery" class="search-results-dropdown" role="region" aria-label="Smart Search Results">
+        <div *ngIf="isSearchLoading" class="search-status">
+          <i class="fa-solid fa-circle-notch fa-spin me-2" aria-hidden="true"></i> Searching...
+        </div>
+
+        <div *ngIf="!isSearchLoading && searchResults.length === 0" class="search-status">
+          No results found for "{{ searchQuery }}".
+        </div>
+
+        <div
+          *ngFor="let book of searchResults"
+          class="search-result-item"
+          role="option"
+          tabindex="0"
+          (click)="onSelectSearchResult(book)"
+          (keydown.enter)="onSelectSearchResult(book)">
+          <h4>
+            <i class="fa-solid fa-book me-2 text-primary" aria-hidden="true"></i>{{ book.title }}
+          </h4>
+          <p>Author: {{ book.author }}</p>
+          <span class="similarity-badge">
+            <i class="fa-solid fa-bolt me-1" aria-hidden="true"></i> Match: {{ (book.similarity * 100).toFixed(0) }}%
+          </span>
+        </div>
+      </div>
+
+      <!-- User Profile Card Button -->
+      <button class="user-profile clickable-profile" (click)="openProfileModal()" aria-label="Update student profile" title="Click to update your profile">
+        <div class="avatar" aria-hidden="true">
+          <i class="fa-solid fa-user-graduate"></i>
+        </div>
+        <span class="user-name">{{ studentName }}</span>
+        <span class="edit-icon" aria-hidden="true">
+          <i class="fa-solid fa-pen-to-square"></i>
+        </span>
+      </button>
+    </header>
+
+    <!-- Dynamic Page Content -->
+    <div class="content-body">
+      <!-- Page-level Alerts: shown only after a modal has already closed -->
+      <div *ngIf="successMessage" class="alert alert-success" role="status" aria-live="polite">
+        <i class="fa-solid fa-circle-check me-2" aria-hidden="true"></i> {{ successMessage }}
+      </div>
+      <div *ngIf="errorMessage" class="alert alert-error" role="alert" aria-live="assertive">
+        <i class="fa-solid fa-circle-exclamation me-2" aria-hidden="true"></i> {{ errorMessage }}
+      </div>
+
+      <div class="welcome-banner-flex">
+        <div class="welcome-card">
+          <h1>Welcome Back, {{ studentName }}! <span aria-hidden="true">👋</span></h1>
+          <p>Explore the university library, search for your required textbooks, and track your active borrowings easily.</p>
+        </div>
+        <!-- Borrow New Book Button -->
+        <button class="btn-primary borrow-btn" (click)="openBorrowModal()">
+          <i class="fa-solid fa-plus me-1" aria-hidden="true"></i> Borrow New Book
+        </button>
+      </div>
+
+      <!-- Category Filter: dropdown only, no grid shown until a category is picked -->
+      <div class="category-filter-section">
+        <label for="category-select" class="category-label">
+          <i class="fa-solid fa-filter me-2" aria-hidden="true"></i> Browse by Category
+        </label>
+        <select
+          id="category-select"
+          class="form-input category-select"
+          [(ngModel)]="selectedCategoryId"
+          (ngModelChange)="onCategoryChange()">
+          <option [ngValue]="null">-- Select a category --</option>
+          <option *ngFor="let cat of categories" [ngValue]="cat.id">{{ cat.name }}</option>
+        </select>
+      </div>
+
+      <!-- Category Books Grid: ONLY rendered once a category is selected -->
+      <div *ngIf="selectedCategoryId" class="category-books-section">
+        <h3 class="section-title">
+          <i class="fa-solid fa-grip me-2" aria-hidden="true"></i> Books in this Category
+        </h3>
+
+        <div *ngIf="isCategoryLoading" class="loading-state" role="status" aria-live="polite">
+          <i class="fa-solid fa-circle-notch fa-spin me-2" aria-hidden="true"></i> Loading books...
+        </div>
+
+        <div *ngIf="!isCategoryLoading && categoryBooks.length === 0" class="empty-state">
+          <i class="fa-solid fa-box-open me-2" aria-hidden="true"></i> No books found in this category.
+        </div>
+
+        <div *ngIf="!isCategoryLoading && categoryBooks.length > 0" class="books-grid">
+          <div class="book-card" *ngFor="let book of categoryBooks">
+            <div class="book-icon" aria-hidden="true">
+              <i class="fa-solid fa-book"></i>
+            </div>
+            <h4>{{ book.title }}</h4>
+            <p class="book-author">{{ book.author }}</p>
+            <span class="book-availability" [class.unavailable]="book.availableCopies === 0">
+              {{ book.availableCopies > 0 ? book.availableCopies + ' available' : 'Not available' }}
+            </span>
+            <button
+              class="btn-mini-borrow"
+              [disabled]="book.availableCopies === 0"
+              (click)="openBorrowModal(book.id)">
+              <i class="fa-solid fa-plus me-1" aria-hidden="true"></i> Borrow
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal: Borrow Request -->
+      <div *ngIf="showBorrowModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="borrow-modal-title" (click)="closeBorrowModal()">
+        <div class="modal-card" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h3 id="borrow-modal-title">
+              <i class="fa-solid fa-book-medical me-2" aria-hidden="true"></i> Request New Book Borrow
+            </h3>
+            <button class="btn-close-icon" (click)="closeBorrowModal()" aria-label="Close modal" [disabled]="isSavingBorrow">
+              <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+            </button>
+          </div>
+
+          <div class="modal-body">
+            <div *ngIf="borrowModalError" class="alert alert-error" role="alert" aria-live="assertive">
+              <i class="fa-solid fa-circle-exclamation me-2" aria-hidden="true"></i> {{ borrowModalError }}
+            </div>
+
+            <div class="form-group">
+              <label for="borrow-book-select">Select Book</label>
+              <select id="borrow-book-select" [(ngModel)]="borrowForm.bookId" class="form-input" [disabled]="isSavingBorrow">
+                <option [ngValue]="0" disabled>-- Select a book --</option>
+                <option *ngFor="let book of availableBooks" [ngValue]="book.id">
+                  {{ book.title }} (Available: {{ book.availableCopies }})
+                </option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="borrow-due-date">Due Date</label>
+              <input
+                id="borrow-due-date"
+                type="date"
+                [(ngModel)]="borrowForm.dueDate"
+                [attr.min]="minDueDate"
+                class="form-input"
+                [disabled]="isSavingBorrow" />
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button class="btn-save" (click)="submitBorrow()" [disabled]="isSavingBorrow">
+              <i class="fa-solid fa-circle-notch fa-spin me-1" *ngIf="isSavingBorrow" aria-hidden="true"></i>
+              <i class="fa-solid fa-circle-check me-1" *ngIf="!isSavingBorrow" aria-hidden="true"></i>
+              {{ isSavingBorrow ? 'Processing...' : 'Confirm Borrow' }}
+            </button>
+            <button class="btn-cancel" (click)="closeBorrowModal()" [disabled]="isSavingBorrow">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal: Update Profile -->
+      <div *ngIf="showProfileModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="profile-modal-title" (click)="closeProfileModal()">
+        <div class="modal-card" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h3 id="profile-modal-title">
+              <i class="fa-solid fa-user-pen me-2" aria-hidden="true"></i> Update Profile
+            </h3>
+            <button class="btn-close-icon" (click)="closeProfileModal()" aria-label="Close modal" [disabled]="isSavingProfile">
+              <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+            </button>
+          </div>
+
+          <div class="modal-body">
+            <div *ngIf="profileModalError" class="alert alert-error" role="alert" aria-live="assertive">
+              <i class="fa-solid fa-circle-exclamation me-2" aria-hidden="true"></i> {{ profileModalError }}
+            </div>
+
+            <div class="form-group">
+              <label for="prof-name">Full Name <span class="required-mark">*</span></label>
+              <input id="prof-name" type="text" [(ngModel)]="profileForm.name" class="form-input" placeholder="Enter full name" [disabled]="isSavingProfile" />
+            </div>
+
+            <div class="form-group">
+              <label for="prof-email">Email Address <span class="required-mark">*</span></label>
+              <input id="prof-email" type="email" [(ngModel)]="profileForm.email" class="form-input" placeholder="Enter email" [disabled]="isSavingProfile" />
+            </div>
+
+            <div class="form-group">
+              <label for="prof-faculty">Faculty</label>
+              <input id="prof-faculty" type="text" [(ngModel)]="profileForm.faculty" class="form-input" placeholder="Enter faculty" [disabled]="isSavingProfile" />
+            </div>
+
+            <div class="form-group">
+              <label for="prof-major">Major</label>
+              <input id="prof-major" type="text" [(ngModel)]="profileForm.majorName" class="form-input" placeholder="Enter major" [disabled]="isSavingProfile" />
+            </div>
+
+            <div class="form-group">
+              <label for="prof-phone">Phone Number</label>
+              <input id="prof-phone" type="tel" [(ngModel)]="profileForm.phone" class="form-input" placeholder="Enter phone number" [disabled]="isSavingProfile" />
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button class="btn-save" (click)="submitProfileUpdate()" [disabled]="isSavingProfile">
+              <i class="fa-solid fa-circle-notch fa-spin me-1" *ngIf="isSavingProfile" aria-hidden="true"></i>
+              <i class="fa-solid fa-floppy-disk me-1" *ngIf="!isSavingProfile" aria-hidden="true"></i>
+              {{ isSavingProfile ? 'Saving...' : 'Save Changes' }}
+            </button>
+            <button class="btn-cancel" (click)="closeProfileModal()" [disabled]="isSavingProfile">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Router Outlet for Child Components -->
+      <router-outlet></router-outlet>
+    </div>
+  </main>
+</div>

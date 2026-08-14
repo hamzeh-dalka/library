@@ -17,15 +17,22 @@ namespace library.Controllers
     {
         private readonly LibraryDbContext _dbContext;
 
+        private const int DefaultPageSize = 10;
+        private const int MaxPageSize = 100;
+
         public BorrowsController(LibraryDbContext dbContext)
         {
             _dbContext = dbContext;
         }
+
         [Authorize(Roles = "Librarian")]
         [HttpGet("GetAllBorrows")]
         public async Task<IActionResult> GetAllBorrows([FromQuery] FilterBorrowDto filterBorrowDto, CancellationToken ct)
         {
-            var userId = GetCurrentUserId();
+            var pageNumber = filterBorrowDto.PageNumber < 1 ? 1 : filterBorrowDto.PageNumber;
+            var pageSize = filterBorrowDto.PageSize < 1
+                ? DefaultPageSize
+                : Math.Min(filterBorrowDto.PageSize, MaxPageSize);
 
             var query = _dbContext.Borrows
                 .Include(x => x.Student)
@@ -53,8 +60,8 @@ namespace library.Controllers
 
             var borrows = await query
                 .OrderByDescending(x => x.Id)
-                .Skip((filterBorrowDto.PageNumber - 1) * filterBorrowDto.PageSize)
-                .Take(filterBorrowDto.PageSize)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
                 .Select(x => new BorrowDto
                 {
                     Id = x.Id,
@@ -73,6 +80,7 @@ namespace library.Controllers
             return Ok(borrows);
         }
 
+        [Authorize(Roles = "Student")]
         [HttpGet("GetBorrowsForStudent")]
         public async Task<IActionResult> GetBorrowsForStudent(CancellationToken ct)
         {
@@ -85,31 +93,30 @@ namespace library.Controllers
 
             if (studentId == 0)
             {
-                return NotFound("Student not found.");
+                return NotFound("Student profile not found for this user.");
             }
 
             var borrows = await _dbContext.Borrows
                 .Where(x => x.StudentId == studentId)
                 .AsNoTracking()
                 .Include(x => x.Book)
-                .ThenInclude(b => b.Category) 
-                .Select(x => new BookDto
+                .ThenInclude(b => b.Category)
+                .Select(x => new BorrowDto
                 {
-                    Id = x.Book.Id,
-                    Title = x.Book.Title,
-                    Author = x.Book.Author,
-                    TotalCopies = x.Book.TotalCopies,
-                    AvailableCopies = x.Book.AvailableCopies,
-                    PublishedYear = x.Book.PublishedYear,
-                    CategoryId = x.Book.CategoryId,
-                    CategoryName = x.Book.Category != null ? x.Book.Category.Name : null,
-                    CreatedAt = x.Book.CreatedAt
+                    Id = x.Id,
+                    BorrowDate = x.BorrowDate,
+                    DueDate = x.DueDate,
+                    ReturnDate = x.ReturnDate,
+                    Status = x.Status,
+                    StudentId = x.StudentId,
+                    BookId = x.BookId,
+                    BookTitle = x.Book.Title,
+                    BookAuthor = x.Book.Author
                 })
                 .ToListAsync(ct);
 
             return Ok(borrows);
         }
-
 
         [Authorize(Roles = "Student")]
         [HttpPost("CreateBorrow")]
@@ -127,21 +134,56 @@ namespace library.Controllers
                 return NotFound("Student profile not found for this user.");
             }
 
-                var borrow = new Borrow()
+            var borrowDate = DateTime.UtcNow;
+
+            if (saveBorrowDto.DueDate <= borrowDate)
             {
-                BorrowDate = saveBorrowDto.BorrowDate,
+                return BadRequest("Due date must be after the borrow date.");
+            }
+
+            using var transaction = await _dbContext.Database.BeginTransactionAsync(ct);
+
+            var book = await _dbContext.Books.FirstOrDefaultAsync(b => b.Id == saveBorrowDto.BookId, ct);
+
+            if (book == null)
+            {
+                return NotFound("Book not found.");
+            }
+
+            if (book.AvailableCopies <= 0)
+            {
+                return BadRequest("No available copies of this book.");
+            }
+
+            var alreadyBorrowed = await _dbContext.Borrows.AnyAsync(b =>
+                b.StudentId == studentId &&
+                b.BookId == saveBorrowDto.BookId &&
+                b.Status != BorrowStatus.Returned, ct);
+
+            if (alreadyBorrowed)
+            {
+                return BadRequest("You already have an active borrow for this book.");
+            }
+
+            var borrow = new Borrow()
+            {
+                BorrowDate = borrowDate,
                 DueDate = saveBorrowDto.DueDate,
-                ReturnDate = saveBorrowDto.ReturnDate,
+                ReturnDate = null,
                 Status = BorrowStatus.Borrowed,
                 StudentId = studentId,
                 BookId = saveBorrowDto.BookId
             };
 
+            book.AvailableCopies -= 1;
+
             _dbContext.Borrows.Add(borrow);
             await _dbContext.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
 
             return Ok();
         }
+
         [Authorize(Roles = "Student")]
         [HttpPatch("ReturnBook/{id}")]
         public async Task<IActionResult> ReturnBook(long id, CancellationToken ct)
@@ -153,12 +195,15 @@ namespace library.Controllers
                 .Select(s => s.Id)
                 .FirstOrDefaultAsync(ct);
 
+            using var transaction = await _dbContext.Database.BeginTransactionAsync(ct);
+
             var borrow = await _dbContext.Borrows
+                .Include(x => x.Book)
                 .FirstOrDefaultAsync(x => x.Id == id && x.StudentId == studentId, ct);
 
             if (borrow == null)
             {
-                return NotFound("Book not found.");
+                return NotFound("Borrow record not found.");
             }
 
             if (borrow.Status == BorrowStatus.Returned)
@@ -166,13 +211,18 @@ namespace library.Controllers
                 return BadRequest("Book has already been returned.");
             }
 
-            borrow.ReturnDate = DateTime.Now;
+            borrow.ReturnDate = DateTime.UtcNow;
             borrow.Status = BorrowStatus.Returned;
 
+            if (borrow.Book != null)
+            {
+                borrow.Book.AvailableCopies = Math.Min(borrow.Book.AvailableCopies + 1, borrow.Book.TotalCopies);
+            }
+
             await _dbContext.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
 
             return Ok(new { Message = "Book returned" });
-
         }
 
         [Authorize(Roles = "Student")]
@@ -199,6 +249,11 @@ namespace library.Controllers
                 return BadRequest("Cannot extend due date for a returned book.");
             }
 
+            if (extendBorrowDto.NewDueDate <= borrow.DueDate)
+            {
+                return BadRequest("New due date must be later than the current due date.");
+            }
+
             borrow.DueDate = extendBorrowDto.NewDueDate;
 
             if (borrow.Status == BorrowStatus.Overdue)
@@ -209,27 +264,33 @@ namespace library.Controllers
             await _dbContext.SaveChangesAsync(ct);
 
             return Ok(new { Message = "Due date extended" });
-
         }
 
         [Authorize(Roles = "Librarian")]
         [HttpDelete("DeleteBorrow/{id}")]
         public async Task<IActionResult> DeleteBorrow(long id, CancellationToken ct)
         {
-            var userId = GetCurrentUserId();
+            using var transaction = await _dbContext.Database.BeginTransactionAsync(ct);
 
-            var borrow = await _dbContext.Borrows.FirstOrDefaultAsync(x => x.Id == id, ct);
+            var borrow = await _dbContext.Borrows
+                .Include(x => x.Book)
+                .FirstOrDefaultAsync(x => x.Id == id, ct);
 
             if (borrow == null)
             {
                 return NotFound("Borrow record not found.");
             }
 
+            if (borrow.Status != BorrowStatus.Returned && borrow.Book != null)
+            {
+                borrow.Book.AvailableCopies = Math.Min(borrow.Book.AvailableCopies + 1, borrow.Book.TotalCopies);
+            }
+
             _dbContext.Borrows.Remove(borrow);
             await _dbContext.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
 
             return NoContent();
-
         }
 
         private long GetCurrentUserId()

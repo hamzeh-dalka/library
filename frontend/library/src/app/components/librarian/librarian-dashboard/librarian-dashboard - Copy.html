@@ -1,0 +1,177 @@
+<div class="dashboard-layout">
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar" aria-label="Librarian Sidebar Navigation">
+    <div class="sidebar-header">
+      <h2>
+        <i class="fa-solid fa-book-journal-whills me-2" aria-hidden="true"></i> Librarian Portal
+      </h2>
+      <p class="librarian-welcome">Welcome, {{ librarianName }}</p>
+    </div>
+
+    <nav class="sidebar-nav" aria-label="Librarian Navigation Links">
+      <a routerLink="/librarianDashboard" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" class="nav-link">
+        <i class="fa-solid fa-chart-pie nav-icon" aria-hidden="true"></i> Dashboard Overview
+      </a>
+      <a routerLink="/librarianBooks" routerLinkActive="active" class="nav-link">
+        <i class="fa-solid fa-book-bookmark nav-icon" aria-hidden="true"></i> Manage Books
+      </a>
+      <a routerLink="/librarianBorrows" routerLinkActive="active" class="nav-link">
+        <i class="fa-solid fa-arrow-right-arrow-left nav-icon" aria-hidden="true"></i> Manage Borrows
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="btn-logout" (click)="onLogout()" aria-label="Log out of librarian portal">
+        <i class="fa-solid fa-right-from-bracket me-2" aria-hidden="true"></i> Logout
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content" id="librarian-main-content">
+    <header class="content-header">
+      <div>
+        <h1>Dashboard Overview</h1>
+        <p class="subtitle">System summary, key statistics, and librarian profile details.</p>
+      </div>
+
+      <!-- User Profile Card Button -->
+      <button class="user-profile clickable-profile" (click)="openProfileModal()" aria-label="Update librarian profile" title="Click to update your profile">
+        <div class="avatar" aria-hidden="true">
+          <i class="fa-solid fa-user-tie"></i>
+        </div>
+        <span class="user-name">{{ librarianName }}</span>
+        <span class="edit-icon" aria-hidden="true">
+          <i class="fa-solid fa-pen-to-square"></i>
+        </span>
+      </button>
+    </header>
+
+    <!-- Page-level Alerts (only for background actions, not modal errors) -->
+    <div *ngIf="successMessage" class="alert alert-success" role="status" aria-live="polite">
+      <i class="fa-solid fa-circle-check me-2" aria-hidden="true"></i> {{ successMessage }}
+    </div>
+    <div *ngIf="errorMessage" class="alert alert-error" role="alert" aria-live="assertive">
+      <i class="fa-solid fa-circle-exclamation me-2" aria-hidden="true"></i> {{ errorMessage }}
+    </div>
+
+    <!-- Profile Card: shown as soon as profile data is ready, independent of stats loading -->
+    <div *ngIf="!isProfileLoading" class="profile-card" role="region" aria-label="Librarian Profile Summary">
+      <div class="profile-avatar" aria-hidden="true">
+        <i class="fa-solid fa-user-tie"></i>
+      </div>
+      <div class="profile-info">
+        <h2>{{ librarianName }}</h2>
+        <span class="role-badge">
+          <i class="fa-solid fa-shield-halved me-1" aria-hidden="true"></i> Authorized Librarian
+        </span>
+        <p class="email-text">
+          <i class="fa-solid fa-envelope me-1" aria-hidden="true"></i> {{ librarianEmail }}
+        </p>
+      </div>
+    </div>
+    <div *ngIf="isProfileLoading" class="loading-state" role="status" aria-live="polite">
+      <i class="fa-solid fa-circle-notch fa-spin me-2" aria-hidden="true"></i> Loading profile...
+    </div>
+
+    <!-- System Statistics Grid -->
+    <h3 class="section-title">
+      <i class="fa-solid fa-chart-simple me-2" aria-hidden="true"></i> Library System Statistics
+    </h3>
+
+    <div *ngIf="isStatsLoading" class="loading-state" role="status" aria-live="polite">
+      <i class="fa-solid fa-circle-notch fa-spin me-2" aria-hidden="true"></i> Loading dashboard overview...
+    </div>
+
+    <div *ngIf="!isStatsLoading" class="stats-grid">
+      <!-- Total Books Card -->
+      <div class="stat-card border-blue" role="region" aria-label="Total Books Statistic">
+        <div class="stat-icon text-blue" aria-hidden="true">
+          <i class="fa-solid fa-book"></i>
+        </div>
+        <div class="stat-details">
+          <h3>Total Books</h3>
+          <p class="stat-number">{{ totalBooks }}</p>
+        </div>
+      </div>
+
+      <!-- Categories Card -->
+      <div class="stat-card border-green" role="region" aria-label="Categories Statistic">
+        <div class="stat-icon text-green" aria-hidden="true">
+          <i class="fa-solid fa-layer-group"></i>
+        </div>
+        <div class="stat-details">
+          <h3>Categories</h3>
+          <p class="stat-number">{{ totalCategories }}</p>
+        </div>
+      </div>
+
+      <!-- Active Borrows Card -->
+      <div class="stat-card border-orange" role="region" aria-label="Active Borrows Statistic">
+        <div class="stat-icon text-orange" aria-hidden="true">
+          <i class="fa-solid fa-clock-rotate-left"></i>
+        </div>
+        <div class="stat-details">
+          <h3>Active Borrows</h3>
+          <p class="stat-number">{{ activeBorrows }}</p>
+        </div>
+      </div>
+
+      <!-- Returned Books Card -->
+      <div class="stat-card border-purple" role="region" aria-label="Returned Books Statistic">
+        <div class="stat-icon text-purple" aria-hidden="true">
+          <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <div class="stat-details">
+          <h3>Returned Books</h3>
+          <p class="stat-number">{{ returnedBorrows }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Update Profile -->
+    <div *ngIf="showProfileModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="profile-modal-title">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3 id="profile-modal-title">
+            <i class="fa-solid fa-user-pen me-2" aria-hidden="true"></i> Update Profile
+          </h3>
+          <button class="btn-close-icon" (click)="closeProfileModal()" aria-label="Close modal" [disabled]="isSaving">
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <!-- Error shown inside the modal so it's visible while the modal is open -->
+          <div *ngIf="modalErrorMessage" class="alert alert-error" role="alert" aria-live="assertive">
+            <i class="fa-solid fa-circle-exclamation me-2" aria-hidden="true"></i> {{ modalErrorMessage }}
+          </div>
+
+          <div class="form-group">
+            <label for="prof-name">Full Name <span class="required-mark">*</span></label>
+            <input id="prof-name" type="text" [(ngModel)]="profileForm.name" class="form-input" placeholder="Enter full name" [disabled]="isSaving" />
+          </div>
+
+          <div class="form-group">
+            <label for="prof-email">Email Address <span class="required-mark">*</span></label>
+            <input id="prof-email" type="email" [(ngModel)]="profileForm.email" class="form-input" placeholder="Enter email" [disabled]="isSaving" />
+          </div>
+
+          <div class="form-group">
+            <label for="prof-phone">Phone Number</label>
+            <input id="prof-phone" type="tel" [(ngModel)]="profileForm.phone" class="form-input" placeholder="Enter phone number" [disabled]="isSaving" />
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn-save" (click)="submitProfileUpdate()" [disabled]="isSaving">
+            <i class="fa-solid fa-circle-notch fa-spin me-1" *ngIf="isSaving" aria-hidden="true"></i>
+            <i class="fa-solid fa-floppy-disk me-1" *ngIf="!isSaving" aria-hidden="true"></i>
+            {{ isSaving ? 'Saving...' : 'Save Changes' }}
+          </button>
+          <button class="btn-cancel" (click)="closeProfileModal()" [disabled]="isSaving">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>

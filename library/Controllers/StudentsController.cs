@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using System.Text.RegularExpressions;
 
 namespace library.Controllers
 {
@@ -20,13 +21,11 @@ namespace library.Controllers
 
         [Authorize(Roles = "Librarian")]
         [HttpGet("GetAllStudents")]
-        public async Task<IActionResult> GetAllStudents([FromQuery] FilterStudentDto filterStudentDto , CancellationToken ct)
+        public async Task<IActionResult> GetAllStudents([FromQuery] FilterStudentDto filterStudentDto, CancellationToken ct)
         {
-            var userId = GetCurrentUserId();
-
             var query = _dbContext.Students.AsQueryable();
 
-            if(filterStudentDto.Id.HasValue)
+            if (filterStudentDto.Id.HasValue)
             {
                 query = query.Where(x => x.Id == filterStudentDto.Id);
             }
@@ -41,7 +40,7 @@ namespace library.Controllers
                 query = query.Where(x => x.Faculty.ToLower().Contains(filterStudentDto.Faculty.ToLower()));
             }
 
-            if(!string.IsNullOrWhiteSpace(filterStudentDto.MajorName))
+            if (!string.IsNullOrWhiteSpace(filterStudentDto.MajorName))
             {
                 query = query.Where(x => x.MajorName.ToLower().Contains(filterStudentDto.MajorName.ToLower()));
             }
@@ -56,30 +55,49 @@ namespace library.Controllers
                     MajorName = x.MajorName,
                     Email = x.Email,
                     Phone = x.Phone
-                }) .ToListAsync(ct);
+                }).ToListAsync(ct);
 
             return Ok(students);
 
         }
-        
+
         [Authorize(Roles = "Student")]
         [HttpPut("UpdateStudent")]
-        public async Task<IActionResult> UpdateStudent(long id ,[FromBody] SaveStudentDto saveStudentDto , CancellationToken ct)
+        public async Task<IActionResult> UpdateStudent([FromBody] SaveStudentDto saveStudentDto, CancellationToken ct)
         {
             var userId = GetCurrentUserId();
 
-            var student = await _dbContext.Students.FirstOrDefaultAsync(x => x.UserId == userId , ct);
+            var student = await _dbContext.Students.FirstOrDefaultAsync(x => x.UserId == userId, ct);
 
             if (student == null)
             {
                 return NotFound($"Student profile not found.");
             }
 
-            student.Name = saveStudentDto.Name;
-            student.Faculty = saveStudentDto.Faculty;
-            student.MajorName = saveStudentDto.MajorName;
-            student.Email = saveStudentDto.Email;
-            student.Phone = saveStudentDto.Phone;
+            if(string.IsNullOrWhiteSpace(saveStudentDto.Name) || string.IsNullOrWhiteSpace(saveStudentDto.Faculty) || string.IsNullOrWhiteSpace(saveStudentDto.MajorName) || string.IsNullOrWhiteSpace(saveStudentDto.Email) || string.IsNullOrWhiteSpace(saveStudentDto.Phone))
+            {
+                return BadRequest("All fields are required.");
+            }
+
+            if (!Regex.IsMatch(saveStudentDto.Email.Trim(), @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+            {
+                return BadRequest("Email format is invalid.");
+            }
+
+            var emailTaken = await _dbContext.Students.AnyAsync(x =>
+                x.Id != student.Id &&
+                x.Email.ToLower() == saveStudentDto.Email.Trim().ToLower(), ct);
+
+            if (emailTaken)
+            {
+                return BadRequest("This email is already in use by another student.");
+            }
+
+            student.Name = saveStudentDto.Name.Trim();
+            student.Faculty = saveStudentDto.Faculty.Trim();
+            student.MajorName = saveStudentDto.MajorName.Trim();
+            student.Email = saveStudentDto.Email.Trim();
+            student.Phone = saveStudentDto.Phone.Trim();
 
             await _dbContext.SaveChangesAsync(ct);
 
@@ -91,17 +109,26 @@ namespace library.Controllers
         [HttpDelete("DeleteStudent")]
         public async Task<IActionResult> DeleteStudent([FromQuery] long id, CancellationToken ct)
         {
-            var userId = GetCurrentUserId();
-
-            var student = await _dbContext.Students.FindAsync(id, ct);
+            var student = await _dbContext.Students
+                .Include(x => x.User)
+                .FirstOrDefaultAsync(x => x.Id == id, ct);
 
             if (student == null)
             {
                 return NotFound($"Student with ID {id} not found.");
             }
 
+            using var transaction = await _dbContext.Database.BeginTransactionAsync(ct);
+
+            if (student.User != null)
+            {
+                _dbContext.Users.Remove(student.User);
+            }
+
             _dbContext.Students.Remove(student);
             await _dbContext.SaveChangesAsync(ct);
+
+            await transaction.CommitAsync(ct);
 
             return NoContent();
 

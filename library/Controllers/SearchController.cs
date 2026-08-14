@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 using library.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 
 namespace library.Controllers
 {
@@ -19,41 +20,45 @@ namespace library.Controllers
             _aiService = aiService;
         }
 
+        [Authorize(Roles = "Student")]
         [HttpGet("smart-search")]
-        public async Task<IActionResult> SmartSearch([FromQuery] string query)
+        public async Task<IActionResult> SmartSearch([FromQuery] string query, CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(query))
             {
                 return BadRequest("Please enter a search query.");
             }
 
-            float[] queryVector = await _aiService.GenerateEmbeddingAsync(query);
+            try
+            {
+                float[] queryVector = await _aiService.GenerateEmbeddingAsync(query);
 
-            var books = await _dbcontext.Books
-                .Where(b => b.Embedding != null)
-                .ToListAsync();
+                var books = await _dbcontext.Books
+                    .Where(b => b.Embedding != null)
+                    .Select(b => new { b.Id, b.Title, b.Author, b.Embedding })
+                    .ToListAsync(ct);
 
-            var rankedBooks = books
-                .Select(b => new
-                {
-                    Book = b,
-                    Similarity = CalculateCosineSimilarity(
-                        queryVector,
-                        JsonSerializer.Deserialize<float[]>(b.Embedding!)
-                    )
-                })
-                .OrderByDescending(x => x.Similarity)
-                .Take(5)
-                .Select(x => new
-                {
-                    x.Book.Id,
-                    x.Book.Title,
-                    x.Book.Author,
-                    x.Similarity
-                })
-                .ToList();
+                var rankedBooks = books
+                    .Select(b => new
+                    {
+                        b.Id,
+                        b.Title,
+                        b.Author,
+                        Similarity = CalculateCosineSimilarity(
+                            queryVector,
+                            JsonSerializer.Deserialize<float[]>(b.Embedding!)
+                        )
+                    })
+                    .OrderByDescending(x => x.Similarity)
+                    .Take(5)
+                    .ToList();
 
-            return Ok(rankedBooks);
+                return Ok(rankedBooks);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"AI Search Error: {ex.Message}");
+            }
         }
 
         private double CalculateCosineSimilarity(float[] vector1, float[] vector2)

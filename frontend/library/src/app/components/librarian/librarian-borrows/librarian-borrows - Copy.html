@@ -1,0 +1,155 @@
+<div class="dashboard-layout">
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar" aria-label="Librarian Sidebar Navigation">
+    <div class="sidebar-header">
+      <h2>
+        <i class="fa-solid fa-book-journal-whills me-2" aria-hidden="true"></i> Librarian Portal
+      </h2>
+      <p class="librarian-welcome">Welcome, {{ librarianName }}</p>
+    </div>
+
+    <nav class="sidebar-nav" aria-label="Librarian Navigation Links">
+      <a routerLink="/librarianDashboard" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" class="nav-link">
+        <i class="fa-solid fa-chart-pie nav-icon" aria-hidden="true"></i> Dashboard Overview
+      </a>
+      <a routerLink="/librarianBooks" routerLinkActive="active" class="nav-link">
+        <i class="fa-solid fa-book-bookmark nav-icon" aria-hidden="true"></i> Manage Books
+      </a>
+      <a routerLink="/librarianBorrows" routerLinkActive="active" class="nav-link">
+        <i class="fa-solid fa-arrow-right-arrow-left nav-icon" aria-hidden="true"></i> Manage Borrows
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="btn-logout" (click)="onLogout()" aria-label="Log out of librarian portal">
+        <i class="fa-solid fa-right-from-bracket me-2" aria-hidden="true"></i> Logout
+      </button>
+    </div>
+  </aside>
+
+<main class="main-content" id="librarian-main-content">
+<div class="borrows-management-container">
+  <div class="header-section">
+    <div>
+      <h2>
+        <i class="fa-solid fa-arrow-right-arrow-left me-2" aria-hidden="true"></i> Borrow Records Management
+      </h2>
+      <p class="subtitle">View and manage all student book borrow activities across the library.</p>
+    </div>
+  </div>
+
+  <!-- Alerts -->
+  <div *ngIf="successMessage" class="alert alert-success" role="status" aria-live="polite">
+    <i class="fa-solid fa-circle-check me-2" aria-hidden="true"></i> {{ successMessage }}
+  </div>
+  <div *ngIf="errorMessage" class="alert alert-error" role="alert" aria-live="assertive">
+    <i class="fa-solid fa-circle-exclamation me-2" aria-hidden="true"></i> {{ errorMessage }}
+  </div>
+
+  <!-- Filtering Bar -->
+  <div class="filter-card" role="search" aria-label="Filter Borrow Records">
+    <div class="filter-group">
+      <label for="filter-id-input">
+        <i class="fa-solid fa-hashtag me-1" aria-hidden="true"></i> Search by ID
+      </label>
+      <input
+        id="filter-id-input"
+        type="number"
+        [(ngModel)]="filter.id"
+        placeholder="Borrow ID"
+        class="form-input"
+        (keyup.enter)="onFilterChange()"
+      />
+    </div>
+
+    <div class="filter-group">
+      <label for="filter-date-input">
+        <i class="fa-regular fa-calendar me-1" aria-hidden="true"></i> Borrow Date
+      </label>
+      <input
+        id="filter-date-input"
+        type="date"
+        [(ngModel)]="filter.borrowDate"
+        class="form-input"
+        (change)="onFilterChange()"
+      />
+    </div>
+
+    <div class="filter-group">
+      <label for="filter-status-select">
+        <i class="fa-solid fa-filter me-1" aria-hidden="true"></i> Status
+      </label>
+      <select id="filter-status-select" [(ngModel)]="filter.status" class="form-input" (change)="onFilterChange()">
+        <option [ngValue]="undefined">All Statuses</option>
+        <option [ngValue]="BorrowStatus.Borrowed">Borrowed</option>
+        <option [ngValue]="BorrowStatus.Returned">Returned</option>
+        <option [ngValue]="BorrowStatus.Overdue">Overdue</option>
+        <option [ngValue]="BorrowStatus.Cancelled">Cancelled</option>
+      </select>
+    </div>
+
+    <div class="filter-actions">
+      <button class="btn-filter" (click)="onFilterChange()" aria-label="Apply record filter">
+        <i class="fa-solid fa-magnifying-glass me-1" aria-hidden="true"></i> Apply Filter
+      </button>
+      <button class="btn-reset" (click)="clearFilters()" aria-label="Reset filter fields">
+        <i class="fa-solid fa-rotate-left me-1" aria-hidden="true"></i> Reset
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-state" role="status" aria-live="polite">
+    <i class="fa-solid fa-circle-notch fa-spin me-2" aria-hidden="true"></i> Loading borrow records...
+  </div>
+
+  <!-- Borrows Table -->
+  <div *ngIf="!isLoading" class="table-container">
+    <table class="data-table" aria-label="Borrow Records Table">
+      <thead>
+        <tr>
+          <th scope="col">ID</th>
+          <th scope="col">Student Name</th>
+          <th scope="col">Book Title</th>
+          <th scope="col">Author</th>
+          <th scope="col">Borrow Date</th>
+          <th scope="col">Due Date</th>
+          <th scope="col">Return Date</th>
+          <th scope="col">Status</th>
+          <th scope="col" class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let b of borrows">
+          <td class="text-muted">#{{ b.id }}</td>
+          <td class="font-weight-medium">
+            <i class="fa-solid fa-user-graduate me-2 text-secondary" aria-hidden="true"></i> {{ b.studentName }}
+          </td>
+          <td class="font-weight-medium">{{ b.bookTitle }}</td>
+          <td>{{ b.bookAuthor }}</td>
+          <td>{{ b.borrowDate | date:'shortDate' }}</td>
+          <td>{{ b.dueDate | date:'shortDate' }}</td>
+          <td>{{ b.returnDate ? (b.returnDate | date:'shortDate') : '-' }}</td>
+          <td>
+            <span class="badge" [ngClass]="isActiveBorrow(b.status) ? 'badge-borrowed' : 'badge-returned'">
+              <i class="fa-solid" [ngClass]="isActiveBorrow(b.status) ? 'fa-clock' : 'fa-circle-check'" aria-hidden="true"></i>
+              {{ borrowStatusLabel(b.status) }}
+            </span>
+          </td>
+          <td class="text-end">
+            <button class="btn-delete" (click)="deleteBorrow(b.id)" aria-label="Delete borrow record">
+              <i class="fa-solid fa-trash-can me-1" aria-hidden="true"></i> Delete
+            </button>
+          </td>
+        </tr>
+        <tr *ngIf="borrows.length === 0">
+          <td colspan="9" class="empty-row">
+            <i class="fa-solid fa-clock-rotate-left me-2" aria-hidden="true"></i> No borrow records found.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+</main>
+</div>

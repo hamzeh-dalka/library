@@ -1,0 +1,80 @@
+<div class="login-container">
+  <div class="login-card" role="region" aria-labelledby="login-title">
+    <div class="login-header">
+      <div class="logo-icon" aria-hidden="true">
+        <i class="fa-solid fa-book-bookmark"></i>
+      </div>
+      <h2 id="login-title">Welcome Back</h2>
+      <p>Log in to access the university library system</p>
+    </div>
+
+    <!-- Error Alert if login fails -->
+    @if (errorMessage) {
+      <div class="alert-error" role="alert" aria-live="assertive">
+        <i class="fa-solid fa-circle-exclamation me-2" aria-hidden="true"></i>
+        <span>{{ errorMessage }}</span>
+      </div>
+    }
+
+    <form [formGroup]="loginForm" (ngSubmit)="onLogin()" aria-label="Login Form">
+      <!-- Username Field -->
+      <div class="form-group">
+        <label for="userName">
+          <i class="fa-solid fa-user me-1" aria-hidden="true"></i> Username
+        </label>
+        <div class="input-wrapper">
+          <input
+            id="userName"
+            type="text"
+            formControlName="userName"
+            placeholder="Enter your username"
+            class="form-control"
+            autocomplete="username"
+            aria-required="true"
+          />
+        </div>
+        @if (loginForm.get('userName')?.invalid && loginForm.get('userName')?.touched) {
+          <small class="error-text" role="alert">
+            <i class="fa-solid fa-circle-xmark me-1" aria-hidden="true"></i> Username is required.
+          </small>
+        }
+      </div>
+
+      <!-- Password Field -->
+      <div class="form-group">
+        <label for="password">
+          <i class="fa-solid fa-lock me-1" aria-hidden="true"></i> Password
+        </label>
+        <div class="input-wrapper">
+          <input
+            id="password"
+            type="password"
+            formControlName="password"
+            placeholder="Enter your password"
+            class="form-control"
+            autocomplete="current-password"
+            aria-required="true"
+          />
+        </div>
+        @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
+          <small class="error-text" role="alert">
+            <i class="fa-solid fa-circle-xmark me-1" aria-hidden="true"></i> Password must be at least 6 characters.
+          </small>
+        }
+      </div>
+
+      <!-- Submit Button -->
+      <button type="submit" class="btn-submit" [disabled]="isLoading" [attr.aria-busy]="isLoading">
+        @if (isLoading) {
+          <i class="fa-solid fa-circle-notch fa-spin me-2" aria-hidden="true"></i> Logging in...
+        } @else {
+          <i class="fa-solid fa-right-to-bracket me-2" aria-hidden="true"></i> Login
+        }
+      </button>
+    </form>
+
+    <div class="login-footer">
+      <p>Don't have an account? <a routerLink="/register" class="link-register">Sign up</a></p>
+    </div>
+  </div>
+</div>

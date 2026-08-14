@@ -1,4 +1,6 @@
 ﻿using library.DTO_s.Book;
+using library.Enums;
+using library.Interfaces;
 using library.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -13,24 +15,32 @@ namespace library.Controllers
     public class BooksController : ControllerBase
     {
         private readonly LibraryDbContext _dbContext;
+        private readonly IAIService _aiService;
 
-        public BooksController(LibraryDbContext dbContext)
+        private const int DefaultPageSize = 10;
+        private const int MaxPageSize = 100;
+
+        public BooksController(LibraryDbContext dbContext, IAIService aiService)
         {
             _dbContext = dbContext;
+            _aiService = aiService;
         }
 
-        [Authorize(Roles = "Librarian")]
+        [Authorize(Roles = "Librarian,Student")]
         [HttpGet("GetAllBooks")]
         public async Task<IActionResult> GetAllBooks([FromQuery] FilterBookDto filterBookDto, CancellationToken ct)
         {
-            var userId = GetCurrentUserId();
+            var pageNumber = filterBookDto.PageNumber < 1 ? 1 : filterBookDto.PageNumber;
+            var pageSize = filterBookDto.PageSize < 1
+                ? DefaultPageSize
+                : Math.Min(filterBookDto.PageSize, MaxPageSize);
 
             var query = _dbContext.Books
                 .Include(x => x.Category)
                 .AsNoTracking()
                 .AsQueryable();
 
-            if(filterBookDto.Id.HasValue)
+            if (filterBookDto.Id.HasValue)
             {
                 query = query.Where(x => x.Id == filterBookDto.Id.Value);
             }
@@ -50,10 +60,15 @@ namespace library.Controllers
                 query = query.Where(x => x.PublishedYear == filterBookDto.PublishedYear.Value);
             }
 
+            if (filterBookDto.CategoryId.HasValue)
+            {
+                query = query.Where(x => x.CategoryId == filterBookDto.CategoryId.Value);
+            }
+
             var books = await query
                 .OrderBy(x => x.Title)
-                .Skip((filterBookDto.PageNumber - 1) * filterBookDto.PageSize)
-                .Take(filterBookDto.PageSize)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
                 .Select(x => new BookDto
                 {
                     Id = x.Id,
@@ -71,12 +86,29 @@ namespace library.Controllers
             return Ok(books);
         }
 
-
         [Authorize(Roles = "Librarian")]
         [HttpPost("AddBook")]
         public async Task<IActionResult> AddBook([FromBody] SaveBookDto saveBookDto, CancellationToken ct)
         {
-            var userId = GetCurrentUserId();
+            if (saveBookDto.TotalCopies < 0)
+            {
+                return BadRequest("TotalCopies cannot be negative.");
+            }
+
+            bool bookExists = await _dbContext.Books.AnyAsync(x =>
+                x.Title.ToLower() == saveBookDto.Title.Trim().ToLower() &&
+                x.Author.ToLower() == saveBookDto.Author.Trim().ToLower(), ct);
+
+            if (bookExists)
+            {
+                return BadRequest("This book already exists.");
+            }
+
+            var categoryExists = await _dbContext.Categories.AnyAsync(c => c.Id == saveBookDto.CategoryId, ct);
+            if (!categoryExists)
+            {
+                return BadRequest("Category does not exist.");
+            }
 
             var book = new Book()
             {
@@ -89,18 +121,32 @@ namespace library.Controllers
                 CreatedAt = DateTime.UtcNow
             };
 
+            try
+            {
+                var textForEmbedding = $"{book.Title} {book.Author}";
+                var vector = await _aiService.GenerateEmbeddingAsync(textForEmbedding);
+                book.Embedding = System.Text.Json.JsonSerializer.Serialize(vector);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Embedding generation failed: {ex.Message}");
+                book.Embedding = null;
+            }
+
             _dbContext.Books.Add(book);
             await _dbContext.SaveChangesAsync(ct);
 
             return Ok();
-
         }
 
         [Authorize(Roles = "Librarian")]
         [HttpPut("UpdateBook/{id}")]
         public async Task<IActionResult> UpdateBook(long id, [FromBody] SaveBookDto saveBookDto, CancellationToken ct)
         {
-            var userId = GetCurrentUserId();
+            if (saveBookDto.TotalCopies < 0)
+            {
+                return BadRequest("TotalCopies cannot be negative.");
+            }
 
             var book = await _dbContext.Books.FirstOrDefaultAsync(x => x.Id == id, ct);
 
@@ -109,16 +155,42 @@ namespace library.Controllers
                 return NotFound($"Book with ID {id} not found");
             }
 
+            var categoryExists = await _dbContext.Categories.AnyAsync(c => c.Id == saveBookDto.CategoryId, ct);
+            if (!categoryExists)
+            {
+                return BadRequest("Category does not exist.");
+            }
+
+            var totalCopiesDelta = saveBookDto.TotalCopies - book.TotalCopies;
+            var newAvailableCopies = book.AvailableCopies + totalCopiesDelta;
+            book.AvailableCopies = Math.Clamp(newAvailableCopies, 0, saveBookDto.TotalCopies);
+
+            var titleOrAuthorChanged =
+                !string.Equals(book.Title, saveBookDto.Title, StringComparison.Ordinal) ||
+                !string.Equals(book.Author, saveBookDto.Author, StringComparison.Ordinal);
+
             book.Title = saveBookDto.Title;
             book.Author = saveBookDto.Author;
             book.TotalCopies = saveBookDto.TotalCopies;
-            book.AvailableCopies = saveBookDto.AvailableCopies;
             book.PublishedYear = saveBookDto.PublishedYear;
             book.CategoryId = saveBookDto.CategoryId;
 
+            if (titleOrAuthorChanged)
+            {
+                try
+                {
+                    var textForEmbedding = $"{book.Title} {book.Author}";
+                    var vector = await _aiService.GenerateEmbeddingAsync(textForEmbedding);
+                    book.Embedding = System.Text.Json.JsonSerializer.Serialize(vector);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Embedding generation failed: {ex.Message}");
+                }
+            }
+
             await _dbContext.SaveChangesAsync(ct);
             return NoContent();
-
         }
 
         [Authorize(Roles = "Student")]
@@ -143,7 +215,7 @@ namespace library.Controllers
                 .Include(b => b.Book)
                 .FirstOrDefaultAsync(ct);
 
-            if (lastBorrow == null || string.IsNullOrEmpty(lastBorrow.Book.Embedding))
+            if (lastBorrow?.Book == null || string.IsNullOrEmpty(lastBorrow.Book.Embedding))
             {
                 var latestBooks = await _dbContext.Books
                     .OrderByDescending(b => b.CreatedAt)
@@ -174,7 +246,9 @@ namespace library.Controllers
                 .Select(b => new
                 {
                     Book = b,
-                    Similarity = CalculateCosineSimilarity(targetVector, System.Text.Json.JsonSerializer.Deserialize<float[]>(b.Embedding!))
+                    Similarity = CalculateCosineSimilarity(
+                        targetVector,
+                        System.Text.Json.JsonSerializer.Deserialize<float[]>(b.Embedding!))
                 })
                 .OrderByDescending(x => x.Similarity)
                 .Take(5)
@@ -192,14 +266,12 @@ namespace library.Controllers
                 .ToList();
 
             return Ok(recommendedBooks);
-        }        
+        }
 
         [Authorize(Roles = "Librarian")]
         [HttpDelete("DeleteBook/{id}")]
         public async Task<IActionResult> DeleteBook(long id, CancellationToken ct)
         {
-            var userId = GetCurrentUserId();
-
             var book = await _dbContext.Books.FirstOrDefaultAsync(x => x.Id == id, ct);
 
             if (book == null)
@@ -207,11 +279,18 @@ namespace library.Controllers
                 return NotFound($"Book with ID {id} not found");
             }
 
+            var hasActiveBorrows = await _dbContext.Borrows.AnyAsync(b =>
+                b.BookId == id && b.Status != BorrowStatus.Returned, ct);
+
+            if (hasActiveBorrows)
+            {
+                return BadRequest("Cannot delete this book while it has active borrows.");
+            }
+
             _dbContext.Books.Remove(book);
             await _dbContext.SaveChangesAsync(ct);
 
             return NoContent();
-
         }
 
         private long GetCurrentUserId()

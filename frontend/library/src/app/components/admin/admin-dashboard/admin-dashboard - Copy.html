@@ -1,0 +1,116 @@
+<div class="admin-layout">
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar" aria-label="Admin Navigation Sidebar">
+    <div class="sidebar-header">
+      <h2>
+        <i class="fa-solid fa-user-shield me-2" aria-hidden="true"></i> System Admin
+      </h2>
+      <p class="admin-name">{{ adminName }}</p>
+    </div>
+
+    <nav class="sidebar-nav" aria-label="Admin Navigation Menu">
+      <button class="nav-item active" aria-current="page">
+        <i class="fa-solid fa-users-gear me-2" aria-hidden="true"></i> Manage Librarians
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="btn-logout" (click)="onLogout()" aria-label="Log out of admin portal">
+        <i class="fa-solid fa-right-from-bracket me-2" aria-hidden="true"></i> Logout
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content" id="admin-main-content">
+    <header class="content-header">
+      <div>
+        <h1>Librarians Management</h1>
+      </div>
+      <button class="btn-primary" (click)="toggleAddForm()" [attr.aria-expanded]="showAddForm">
+        <i class="fa-solid" [ngClass]="showAddForm ? 'fa-xmark' : 'fa-plus'" aria-hidden="true"></i>
+        <span>{{ showAddForm ? ' Cancel' : ' Add New Librarian' }}</span>
+      </button>
+    </header>
+
+    <!-- Alerts -->
+    <div *ngIf="successMessage" class="alert alert-success" role="status" aria-live="polite">
+      <i class="fa-solid fa-circle-check me-2" aria-hidden="true"></i> {{ successMessage }}
+    </div>
+    <div *ngIf="errorMessage" class="alert alert-error" role="alert" aria-live="assertive">
+      <i class="fa-solid fa-circle-exclamation me-2" aria-hidden="true"></i> {{ errorMessage }}
+    </div>
+
+    <!-- Add Librarian Card -->
+    <div *ngIf="showAddForm" class="form-card" role="region" aria-labelledby="add-lib-title">
+      <h3 id="add-lib-title">
+        <i class="fa-solid fa-user-plus me-2" aria-hidden="true"></i> Add New Librarian
+      </h3>
+      <div class="form-grid-3col">
+        <div class="form-group">
+          <label for="lib-name">Full Name</label>
+          <input id="lib-name" type="text" [(ngModel)]="newLibrarian.name" placeholder="Enter name" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label for="lib-username">Username</label>
+          <input id="lib-username" type="text" [(ngModel)]="newLibrarian.userName" placeholder="Enter username" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label for="lib-password">Password</label>
+          <input id="lib-password" type="password" [(ngModel)]="newLibrarian.password" placeholder="Enter password" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label for="lib-email">Email Address</label>
+          <input id="lib-email" type="email" [(ngModel)]="newLibrarian.email" placeholder="Enter email" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label for="lib-phone">Phone Number</label>
+          <input id="lib-phone" type="tel" [(ngModel)]="newLibrarian.phone" placeholder="Enter phone" class="form-input" />
+        </div>
+      </div>
+      <button class="btn-save" (click)="addLibrarian()">
+        <i class="fa-solid fa-floppy-disk me-2" aria-hidden="true"></i> Save Librarian
+      </button>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="loading-state" role="status" aria-live="polite">
+      <i class="fa-solid fa-circle-notch fa-spin me-2" aria-hidden="true"></i> Loading librarians...
+    </div>
+
+    <!-- Librarians Table -->
+    <div *ngIf="!isLoading" class="tab-content">
+      <div class="table-container">
+        <table class="data-table" aria-label="Librarians Table">
+          <thead>
+            <tr>
+              <th scope="col">Name</th>
+              <th scope="col">Email</th>
+              <th scope="col">Phone</th>
+              <th scope="col" class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let lib of librarians">
+              <td class="font-weight-medium">
+                <i class="fa-solid fa-user-tie me-2 text-muted" aria-hidden="true"></i>{{ lib.name }}
+              </td>
+              <td>{{ lib.email }}</td>
+              <td>{{ lib.phone }}</td>
+              <td class="text-end">
+                <button class="btn-delete" (click)="deleteLibrarian(lib.id)" aria-label="Delete librarian account">
+                  <i class="fa-solid fa-trash-can me-1" aria-hidden="true"></i> Delete
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="librarians.length === 0">
+              <td colspan="4" class="empty-row">
+                <i class="fa-solid fa-folder-open me-2" aria-hidden="true"></i> No librarians found.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>

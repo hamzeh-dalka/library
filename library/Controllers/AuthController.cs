@@ -1,17 +1,18 @@
 ﻿using library.DTO_s.Login;
 using library.DTO_s.Register;
-using library.Models;
 using library.Enums;
+using library.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Numerics;
 using System.Security.Claims;
 using System.Text;
-using Microsoft.AspNetCore.Authorization;
+using System.Text.RegularExpressions;
 
 namespace library.Controllers 
 {
@@ -37,7 +38,7 @@ namespace library.Controllers
                 return BadRequest("Username already exists");
             }
 
-            using var transaction = await _dbContext.Database.BeginTransactionAsync();
+            using var transaction = await _dbContext.Database.BeginTransactionAsync(ct);
 
             var user = CreateUser(dto.UserName, dto.Password, Role.Librarian);
 
@@ -46,9 +47,9 @@ namespace library.Controllers
 
             var librarian = new Librarian
             {
-                Name = dto.Name,
-                Email = dto.Email,
-                Phone = dto.Phone,
+                Name = dto.Name.Trim(),
+                Email = dto.Email.Trim(),
+                Phone = dto.Phone.Trim(),
                 UserId = user.Id,
             };
 
@@ -69,7 +70,7 @@ namespace library.Controllers
                 return BadRequest("Username already exists");
             }
 
-            using var transaction = await _dbContext.Database.BeginTransactionAsync();
+            using var transaction = await _dbContext.Database.BeginTransactionAsync(ct);
 
             var user = CreateUser(dto.UserName, dto.Password, Role.Student);
 
@@ -78,12 +79,12 @@ namespace library.Controllers
 
             var student = new Student
             {
-                Name = dto.Name,
-                Email = dto.Email,
-                Phone = dto.Phone,
+                Name = dto.Name.Trim(),
+                Email = dto.Email.Trim(),
+                Phone = dto.Phone.Trim(),
                 UserId = user.Id,
-                Faculty = dto.Faculty,
-                MajorName = dto.MajorName
+                Faculty = dto.Faculty.Trim(),
+                MajorName = dto.MajorName.Trim()
             };
 
             _dbContext.Students.Add(student);
@@ -116,19 +117,38 @@ namespace library.Controllers
                 return BadRequest("Invalid username or password");
             }
 
-            var token = GenerateJwtToken(user);
+            var token = await GenerateJwtToken(user);
 
             return Ok(new { Token = token });
 
         }
 
-        private string GenerateJwtToken(User user)
+        private async Task<string> GenerateJwtToken(User user)
         {
+            string userEmail = string.Empty;
+
+            if(user.Role == Role.Librarian)
+            {
+                var librarian = await _dbContext.Librarians.FirstOrDefaultAsync(l => l.UserId == user.Id);
+                if (librarian != null)
+                {
+                    userEmail = librarian.Email ?? string.Empty;
+                }
+            }
+            else if (user.Role == Role.Student)
+            {
+                var student = await _dbContext.Students.FirstOrDefaultAsync(s => s.UserId == user.Id);
+                if (student != null)
+                {
+                    userEmail = student.Email ?? string.Empty;
+                }
+            }
 
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Name, user.UserName ?? ""),
+                new Claim(ClaimTypes.Email, userEmail),
                 new Claim(ClaimTypes.Role, user.Role.ToString())
             };
 

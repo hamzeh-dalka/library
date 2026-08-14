@@ -1,0 +1,107 @@
+<div class="dashboard-container">
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar" aria-label="Student Portal Navigation Sidebar">
+    <div class="sidebar-header">
+      <h2>
+        <i class="fa-solid fa-book-open-reader me-2" aria-hidden="true"></i> Library
+      </h2>
+      <p class="portal-badge">Student Portal</p>
+    </div>
+
+    <nav class="sidebar-nav" aria-label="Student Main Navigation">
+      <a routerLink="/studentDashboard" routerLinkActive="active"
+        [routerLinkActiveOptions]="{exact: true}" class="nav-item">
+        <i class="fa-solid fa-chart-pie nav-icon" aria-hidden="true"></i>
+        <span>Dashboard</span>
+      </a>
+
+      <a routerLink="/studentBorrows" routerLinkActive="active" class="nav-item">
+        <i class="fa-solid fa-book-bookmark nav-icon" aria-hidden="true"></i>
+        <span>My Borrows</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="btn-logout" (click)="onLogout()" aria-label="Log out of student portal">
+        <i class="fa-solid fa-right-from-bracket nav-icon" aria-hidden="true"></i>
+        <span>Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content Area -->
+  <main class="main-content" id="student-main-content">
+<div class="borrows-container">
+  <div class="header-section">
+    <h2>
+      <i class="fa-solid fa-book-bookmark me-2" aria-hidden="true"></i> My Borrowed Books
+    </h2>
+    <p class="subtitle">Here you can view the books you currently have borrowed.</p>
+  </div>
+
+  <!-- Alerts -->
+  @if (errorMessage) {
+    <div class="alert alert-error" role="alert" aria-live="assertive">
+      <i class="fa-solid fa-circle-exclamation me-2" aria-hidden="true"></i> {{ errorMessage }}
+    </div>
+  }
+
+  <!-- Loading State -->
+  @if (isLoading) {
+    <div class="loading-state" role="status" aria-live="polite">
+      <i class="fa-solid fa-circle-notch fa-spin me-2" aria-hidden="true"></i>
+      <span>Loading your borrowed books...</span>
+    </div>
+  }
+
+  <!-- Borrowed Books Grid -->
+  @if (!isLoading && borrowedBooks.length > 0) {
+    <div class="books-grid" role="region" aria-label="Borrowed Books Grid">
+      @for (book of borrowedBooks; track book.id) {
+        <div class="book-card">
+          <div class="book-card-header">
+            <div class="book-icon" aria-hidden="true">
+              <i class="fa-solid fa-book"></i>
+            </div>
+            <div class="book-info">
+              <h3>{{ book.title }}</h3>
+              <p class="author">
+                <i class="fa-solid fa-user me-1 text-muted" aria-hidden="true"></i>
+                <strong>Author:</strong> {{ book.author }}
+              </p>
+              @if (book.categoryName) {
+                <p class="category">
+                  <i class="fa-solid fa-tag me-1 text-muted" aria-hidden="true"></i>
+                  <strong>Category:</strong> {{ book.categoryName }}
+                </p>
+              }
+              <p class="year">
+                <i class="fa-regular fa-calendar me-1 text-muted" aria-hidden="true"></i>
+                <strong>Published:</strong> {{ book.publishedYear }}
+              </p>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Return/extend aren't offered here: the API doesn't expose individual
+         borrow-record ids or due dates to students, only the book itself
+         (see BorrowsController.GetBorrowsForStudent). -->
+    <p class="subtitle">
+      <i class="fa-solid fa-circle-info me-1" aria-hidden="true"></i>
+      Returning a book or requesting a due-date extension isn't available from this view yet. Please contact the library desk for those requests.
+    </p>
+  }
+
+  <!-- Empty State -->
+  @if (!isLoading && borrowedBooks.length === 0) {
+    <div class="empty-state" role="status">
+      <div class="empty-icon" aria-hidden="true">
+        <i class="fa-solid fa-book-open"></i>
+      </div>
+      <h3>No Active Borrowings</h3>
+      <p>You don't have any borrowed books right now.</p>
+    </div>
+  }
+</div>

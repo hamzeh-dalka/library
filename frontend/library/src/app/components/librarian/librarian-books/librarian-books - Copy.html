@@ -1,0 +1,217 @@
+<div class="dashboard-layout">
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar" aria-label="Librarian Sidebar Navigation">
+    <div class="sidebar-header">
+      <h2>
+        <i class="fa-solid fa-book-journal-whills me-2" aria-hidden="true"></i> Librarian Portal
+      </h2>
+      <p class="librarian-welcome">Welcome, {{ librarianName }}</p>
+    </div>
+
+    <nav class="sidebar-nav" aria-label="Librarian Navigation Links">
+      <a routerLink="/librarianDashboard" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" class="nav-link">
+        <i class="fa-solid fa-chart-pie nav-icon" aria-hidden="true"></i> Dashboard Overview
+      </a>
+      <a routerLink="/librarianBooks" routerLinkActive="active" class="nav-link">
+        <i class="fa-solid fa-book-bookmark nav-icon" aria-hidden="true"></i> Manage Books
+      </a>
+      <a routerLink="/librarianBorrows" routerLinkActive="active" class="nav-link">
+        <i class="fa-solid fa-arrow-right-arrow-left nav-icon" aria-hidden="true"></i> Manage Borrows
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="btn-logout" (click)="onLogout()" aria-label="Log out of librarian portal">
+        <i class="fa-solid fa-right-from-bracket me-2" aria-hidden="true"></i> Logout
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content Area -->
+  <main class="main-content" id="librarian-main-content">
+    <div class="books-management-container">
+      <div class="header-section">
+        <div>
+          <h2>
+            <i class="fa-solid fa-book-bookmark me-2" aria-hidden="true"></i> Books & Categories Management
+          </h2>
+          <p class="subtitle">Add, update, or remove library books and organize categories.</p>
+        </div>
+        <div class="action-buttons">
+          <button class="btn-secondary" (click)="showCategorySection = !showCategorySection" [attr.aria-expanded]="showCategorySection">
+            <i class="fa-solid fa-layer-group me-1" aria-hidden="true"></i>
+            <span>{{ showCategorySection ? 'Hide Category Manager' : 'Manage Categories' }}</span>
+          </button>
+          <button class="btn-primary" (click)="openAddBookModal()">
+            <i class="fa-solid fa-plus me-1" aria-hidden="true"></i> Add New Book
+          </button>
+        </div>
+      </div>
+
+      <!-- Alerts -->
+      @if (successMessage) {
+        <div class="alert alert-success" role="status" aria-live="polite">
+          <i class="fa-solid fa-circle-check me-2" aria-hidden="true"></i> {{ successMessage }}
+        </div>
+      }
+      @if (errorMessage) {
+        <div class="alert alert-error" role="alert" aria-live="assertive">
+          <i class="fa-solid fa-circle-exclamation me-2" aria-hidden="true"></i> {{ errorMessage }}
+        </div>
+      }
+
+      <!-- Category Manager Panel -->
+      @if (showCategorySection) {
+        <div class="category-panel" role="region" aria-label="Category Manager">
+          <h3>
+            <i class="fa-solid fa-tags me-2" aria-hidden="true"></i> Add & Manage Categories
+          </h3>
+          <div class="category-form-inline">
+            <div class="form-group-inline">
+              <label for="cat-name-input" class="sr-only">Category Name</label>
+              <input id="cat-name-input" type="text" [(ngModel)]="newCategory.name" placeholder="Category Name" class="form-input" />
+            </div>
+            <button class="btn-save-cat" (click)="addCategory()">
+              <i class="fa-solid fa-plus me-1" aria-hidden="true"></i> Save Category
+            </button>
+          </div>
+          <div class="category-tags" aria-label="Existing Categories">
+            @for (cat of categories; track cat.id) {
+              <div class="category-tag-item">
+                <span class="category-tag-text">
+                  <i class="fa-solid fa-tag me-1" aria-hidden="true"></i> {{ cat.name }}
+                </span>
+                <button class="btn-delete-cat" (click)="deleteCategory(cat.id)" [attr.aria-label]="'Delete category ' + cat.name" title="Delete category">
+                  <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                </button>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Modal Dialog for Add/Edit Book -->
+      @if (showBookModal) {
+        <div class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-book-title">
+          <div class="modal-card">
+            <div class="modal-header">
+              <h3 id="modal-book-title">
+                <i class="fa-solid" [ngClass]="isEditMode ? 'fa-pen-to-square' : 'fa-book-medical'" aria-hidden="true"></i>
+                <span> {{ isEditMode ? 'Edit Book Details' : 'Add New Book' }}</span>
+              </h3>
+              <button class="btn-close-icon" (click)="showBookModal = false" aria-label="Close modal">
+                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+              </button>
+            </div>
+
+            <div class="modal-body">
+              <div class="form-group">
+                <label for="book-title-input">Book Title</label>
+                <input id="book-title-input" type="text" [(ngModel)]="bookForm.title" placeholder="Book Title" class="form-input" />
+              </div>
+
+              <div class="form-group">
+                <label for="book-author-input">Author Name</label>
+                <input id="book-author-input" type="text" [(ngModel)]="bookForm.author" placeholder="Author Name" class="form-input" />
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="book-copies-input">Total Copies</label>
+                  <input id="book-copies-input" type="number" min="1" [(ngModel)]="bookForm.totalCopies" class="form-input" />
+                </div>
+                <div class="form-group">
+                  <label for="book-year-input">Published Year</label>
+                  <input id="book-year-input" type="number" [(ngModel)]="bookForm.publishedYear" class="form-input" />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="book-cat-select">Category</label>
+                <select id="book-cat-select" [(ngModel)]="bookForm.categoryId" class="form-input">
+                  <option [value]="0" disabled>Select Category</option>
+                  @for (cat of categories; track cat.id) {
+                    <option [value]="cat.id">{{ cat.name }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+
+            <div class="modal-actions">
+              <button class="btn-save" (click)="saveBook()">
+                <i class="fa-solid fa-floppy-disk me-1" aria-hidden="true"></i> Save Book
+              </button>
+              <button class="btn-cancel" (click)="showBookModal = false">Cancel</button>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Loading State -->
+      @if (isLoading) {
+        <div class="loading-state" role="status" aria-live="polite">
+          <i class="fa-solid fa-circle-notch fa-spin me-2" aria-hidden="true"></i> Loading books...
+        </div>
+      }
+
+      <!-- Books Table -->
+      @if (!isLoading) {
+        <div class="table-container">
+          <table class="data-table" aria-label="Library Books Catalog Table">
+            <thead>
+              <tr>
+                <th scope="col">ID</th>
+                <th scope="col">Title</th>
+                <th scope="col">Author</th>
+                <th scope="col">Category</th>
+                <th scope="col">Copies (Avail / Total)</th>
+                <th scope="col">Year</th>
+                <th scope="col" class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (book of books; track book.id) {
+                <tr>
+                  <td class="text-muted">#{{ book.id }}</td>
+                  <td class="font-weight-medium">
+                    <i class="fa-solid fa-book me-2 text-primary" aria-hidden="true"></i> {{ book.title }}
+                  </td>
+                  <td>{{ book.author }}</td>
+                  <td>
+                    <span class="category-badge">
+                      <i class="fa-solid fa-tag me-1" aria-hidden="true"></i> {{ book.categoryName || 'Uncategorized' }}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="badge" [ngClass]="book.availableCopies > 0 ? 'badge-available' : 'badge-out'">
+                      <i class="fa-solid" [ngClass]="book.availableCopies > 0 ? 'fa-circle-check' : 'fa-circle-xmark'" aria-hidden="true"></i>
+                      {{ book.availableCopies }} / {{ book.totalCopies }}
+                    </span>
+                  </td>
+                  <td>{{ book.publishedYear }}</td>
+                  <td class="text-end">
+                    <div class="row-actions">
+                      <button class="btn-edit" (click)="openEditBookModal(book)" aria-label="Edit book details">
+                        <i class="fa-solid fa-pen-to-square me-1" aria-hidden="true"></i> Edit
+                      </button>
+                      <button class="btn-delete" (click)="deleteBook(book.id)" aria-label="Delete book">
+                        <i class="fa-solid fa-trash-can me-1" aria-hidden="true"></i> Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+              @if (books.length === 0) {
+                <tr>
+                  <td colspan="7" class="empty-row">
+                    <i class="fa-solid fa-book-open me-2" aria-hidden="true"></i> No books found in the system.
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  </main>
+</div>

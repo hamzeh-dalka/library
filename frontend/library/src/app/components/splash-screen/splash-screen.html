@@ -1,0 +1,65 @@
+<div class="landing-container">
+  <!-- Hero Section / Splash Screen -->
+  <section class="hero-section" aria-label="Welcome Hero Banner">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <div class="logo-badge" aria-label="University Library System">
+        <i class="fa-solid fa-book-open-reader me-2" aria-hidden="true"></i>
+        <span>University Library</span>
+      </div>
+      
+      <h1 class="hero-title">Welcome to Your Academic Hub</h1>
+      <p class="hero-subtitle">Discover thousands of books, research papers, and digital resources to power your academic journey.</p>
+
+      <div class="auth-buttons" role="group" aria-label="Authentication Links">
+        <a routerLink="/login" class="btn btn-primary" aria-label="Login to your library account">
+          <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i> Login
+        </a>
+        <a routerLink="/register" class="btn btn-secondary" aria-label="Create a new student account">
+          <i class="fa-solid fa-user-plus" aria-hidden="true"></i> Sign Up
+        </a>
+      </div>
+
+      <a href="#about-library" class="scroll-indicator" aria-label="Scroll down to learn more about the library">
+        <span>Scroll down to explore</span>
+        <i class="fa-solid fa-chevron-down arrow-down" aria-hidden="true"></i>
+      </a>
+    </div>
+  </section>
+
+  <!-- Library Description Section (Visible on Scroll) -->
+  <section id="about-library" class="description-section" aria-labelledby="about-title">
+    <div class="container">
+      <div class="section-header">
+        <h2 id="about-title">About Our Library</h2>
+        <p class="section-subtitle">Empowering students and researchers with cutting-edge tools and vast literature.</p>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon" aria-hidden="true">
+            <i class="fa-solid fa-book"></i>
+          </div>
+          <h3>Extensive Collection</h3>
+          <p>Access a wide range of textbooks, academic journals, and novels across various faculties and majors.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon" aria-hidden="true">
+            <i class="fa-solid fa-bolt"></i>
+          </div>
+          <h3>Smart Borrowing</h3>
+          <p>Easily track your borrowed books, check due dates, and reserve titles online through our digital management system.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon" aria-hidden="true">
+            <i class="fa-solid fa-laptop-code"></i>
+          </div>
+          <h3>24/7 Digital Access</h3>
+          <p>Connect with our online databases, e-books, and AI-assisted search features from anywhere, anytime.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

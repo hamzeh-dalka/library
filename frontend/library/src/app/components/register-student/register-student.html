@@ -1,0 +1,189 @@
+<div class="register-container">
+  <div class="register-card" role="region" aria-labelledby="register-title">
+    <div class="register-header">
+      <div class="logo-icon" aria-hidden="true">
+        <i class="fa-solid fa-graduation-cap"></i>
+      </div>
+      <h2 id="register-title">Student Registration</h2>
+      <p>Create your account to access the university library system</p>
+    </div>
+
+    <!-- Error Alert -->
+    @if (errorMessage) {
+      <div class="alert-error" role="alert" aria-live="assertive">
+        <i class="fa-solid fa-circle-exclamation me-2" aria-hidden="true"></i>
+        <span>{{ errorMessage }}</span>
+      </div>
+    }
+
+    <!-- Success Alert -->
+    @if (successMessage) {
+      <div class="alert-success" role="status" aria-live="polite">
+        <i class="fa-solid fa-circle-check me-2" aria-hidden="true"></i>
+        <span>{{ successMessage }}</span>
+      </div>
+    }
+
+    <form [formGroup]="registerForm" (ngSubmit)="onRegister()" aria-label="Student Registration Form">
+      <div class="form-grid-2col">
+        <!-- Full Name -->
+        <div class="form-group">
+          <label for="name">
+            <i class="fa-solid fa-id-card me-1" aria-hidden="true"></i> Full Name
+          </label>
+          <input
+            id="name"
+            type="text"
+            formControlName="name"
+            placeholder="Enter your full name"
+            class="form-control"
+            autocomplete="name"
+            aria-required="true"
+          />
+          @if (registerForm.get('name')?.invalid && registerForm.get('name')?.touched) {
+            <small class="error-text" role="alert">
+              <i class="fa-solid fa-circle-xmark me-1" aria-hidden="true"></i> Full name is required.
+            </small>
+          }
+        </div>
+
+        <!-- Username -->
+        <div class="form-group">
+          <label for="userName">
+            <i class="fa-solid fa-user me-1" aria-hidden="true"></i> Username
+          </label>
+          <input
+            id="userName"
+            type="text"
+            formControlName="userName"
+            placeholder="Choose a username"
+            class="form-control"
+            autocomplete="username"
+            aria-required="true"
+          />
+          @if (registerForm.get('userName')?.invalid && registerForm.get('userName')?.touched) {
+            <small class="error-text" role="alert">
+              <i class="fa-solid fa-circle-xmark me-1" aria-hidden="true"></i> Username is required.
+            </small>
+          }
+        </div>
+
+        <!-- Email -->
+        <div class="form-group">
+          <label for="email">
+            <i class="fa-solid fa-envelope me-1" aria-hidden="true"></i> Email Address
+          </label>
+          <input
+            id="email"
+            type="email"
+            formControlName="email"
+            placeholder="Enter university email"
+            class="form-control"
+            autocomplete="email"
+            aria-required="true"
+          />
+          @if (registerForm.get('email')?.invalid && registerForm.get('email')?.touched) {
+            <small class="error-text" role="alert">
+              <i class="fa-solid fa-circle-xmark me-1" aria-hidden="true"></i> Valid email is required.
+            </small>
+          }
+        </div>
+
+        <!-- Password -->
+        <div class="form-group">
+          <label for="password">
+            <i class="fa-solid fa-lock me-1" aria-hidden="true"></i> Password
+          </label>
+          <input
+            id="password"
+            type="password"
+            formControlName="password"
+            placeholder="Min 6 characters"
+            class="form-control"
+            autocomplete="new-password"
+            aria-required="true"
+          />
+          @if (registerForm.get('password')?.invalid && registerForm.get('password')?.touched) {
+            <small class="error-text" role="alert">
+              <i class="fa-solid fa-circle-xmark me-1" aria-hidden="true"></i> Password must be at least 6 characters.
+            </small>
+          }
+        </div>
+
+        <!-- Phone -->
+        <div class="form-group">
+          <label for="phone">
+            <i class="fa-solid fa-phone me-1" aria-hidden="true"></i> Phone Number
+          </label>
+          <input
+            id="phone"
+            type="tel"
+            formControlName="phone"
+            placeholder="Enter phone number"
+            class="form-control"
+            autocomplete="tel"
+            aria-required="true"
+          />
+          @if (registerForm.get('phone')?.invalid && registerForm.get('phone')?.touched) {
+            <small class="error-text" role="alert">
+              <i class="fa-solid fa-circle-xmark me-1" aria-hidden="true"></i> Phone number is required.
+            </small>
+          }
+        </div>
+
+        <!-- Faculty -->
+        <div class="form-group">
+          <label for="faculty">
+            <i class="fa-solid fa-building-columns me-1" aria-hidden="true"></i> Faculty
+          </label>
+          <input
+            id="faculty"
+            type="text"
+            formControlName="faculty"
+            placeholder="e.g. Faculty of IT"
+            class="form-control"
+            aria-required="true"
+          />
+          @if (registerForm.get('faculty')?.invalid && registerForm.get('faculty')?.touched) {
+            <small class="error-text" role="alert">
+              <i class="fa-solid fa-circle-xmark me-1" aria-hidden="true"></i> Faculty is required.
+            </small>
+          }
+        </div>
+      </div>
+
+      <!-- Major Name (Full width) -->
+      <div class="form-group">
+        <label for="majorName">
+          <i class="fa-solid fa-book-open me-1" aria-hidden="true"></i> Major Name
+        </label>
+        <input
+          id="majorName"
+          type="text"
+          formControlName="majorName"
+          placeholder="e.g. Computer Science"
+          class="form-control"
+          aria-required="true"
+        />
+        @if (registerForm.get('majorName')?.invalid && registerForm.get('majorName')?.touched) {
+          <small class="error-text" role="alert">
+            <i class="fa-solid fa-circle-xmark me-1" aria-hidden="true"></i> Major name is required.
+          </small>
+        }
+      </div>
+
+      <!-- Submit Button -->
+      <button type="submit" class="btn-submit" [disabled]="isLoading" [attr.aria-busy]="isLoading">
+        @if (isLoading) {
+          <i class="fa-solid fa-circle-notch fa-spin me-2" aria-hidden="true"></i> Registering...
+        } @else {
+          <i class="fa-solid fa-user-plus me-2" aria-hidden="true"></i> Sign Up
+        }
+      </button>
+    </form>
+
+    <div class="register-footer">
+      <p>Already have an account? <a routerLink="/login" class="link-login">Login</a></p>
+    </div>
+  </div>
+</div>
